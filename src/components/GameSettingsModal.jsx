@@ -1,5 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { sound } from "../utils/sound";
 
 export default function GameSettingsModal({
   isOpen,
@@ -12,8 +13,15 @@ export default function GameSettingsModal({
   const [questionCount, setQuestionCount] = React.useState(settings.questionCount || 10);
   const [difficulty, setDifficulty] = React.useState(settings.difficulty || "medium");
   const [hasTimer, setHasTimer] = React.useState(settings.hasTimer ?? true);
+  const [volume, setVolume] = React.useState(Math.round(sound.getVolume() * 100));
 
   if (!isOpen) return null;
+
+  const handleVolumeChange = (e) => {
+    const val = parseInt(e.target.value, 10);
+    setVolume(val);
+    sound.setVolume(val / 100);
+  };
 
   const handleApply = () => {
     onSaveSettings({
@@ -128,8 +136,8 @@ export default function GameSettingsModal({
             </div>
           )}
 
-          {/* Difficulty & Timer */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Difficulty & Timer & Audio Volume */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="text-xs font-bold text-[#A0A5D0] uppercase tracking-wider block mb-1.5">
                 Difficulty
@@ -152,14 +160,31 @@ export default function GameSettingsModal({
               <button
                 type="button"
                 onClick={() => setHasTimer(!hasTimer)}
-                className={`w-full py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                className={`w-full py-2 px-2.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                   hasTimer
                     ? "bg-[#2563EB]/25 border-[#3B82F6] text-[#93C5FD]"
                     : "bg-[#1E213D] border-[#343964] text-gray-400"
                 }`}
               >
-                {hasTimer ? "⏱️ Enabled (15s)" : "♾️ Relaxed (No Timer)"}
+                {hasTimer ? "⏱️ Enabled (15s)" : "♾️ Relaxed (Off)"}
               </button>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="text-xs font-bold text-[#A0A5D0] uppercase tracking-wider">
+                  Audio Volume
+                </label>
+                <span className="text-xs text-[#BC6BE8] font-bold">{volume}%</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={volume}
+                onChange={handleVolumeChange}
+                className="w-full accent-[#BC6BE8] cursor-pointer"
+              />
             </div>
           </div>
 
