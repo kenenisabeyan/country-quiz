@@ -18,6 +18,7 @@ export default function CompletePage({
   onOpenSettings,
   onInspectCountry,
   onOpenCertificate,
+  onGoHome,
 }) {
   const [showReview, setShowReview] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -32,7 +33,15 @@ export default function CompletePage({
     }
   }, [percentage, isSurvivalMode, survivedCount]);
 
-  const getRank = () => {
+  const getGrade = () => {
+    if (percentage >= 95) return { grade: "S", label: "Mastery", color: "text-amber-300 border-amber-400 bg-amber-400/10" };
+    if (percentage >= 80) return { grade: "A", label: "Distinction", color: "text-purple-300 border-purple-400 bg-purple-400/10" };
+    if (percentage >= 65) return { grade: "B", label: "Competent", color: "text-blue-300 border-blue-400 bg-blue-400/10" };
+    if (percentage >= 50) return { grade: "C", label: "Passing", color: "text-emerald-300 border-emerald-400 bg-emerald-400/10" };
+    return { grade: "D", label: "Novice", color: "text-rose-300 border-rose-400 bg-rose-400/10" };
+  };
+
+  const gradeInfo = getGrade();
     if (isSurvivalMode) {
       if (survivedCount >= 15) return { title: "👑 Geography Legend", desc: "Immortal knowledge of the globe!" };
       if (survivedCount >= 10) return { title: "🧭 Seasoned Navigator", desc: "Exceptional survival skills!" };
