@@ -549,6 +549,118 @@ export function generateMixedQuestions(count = 10, continent = "All") {
   return [...flags, ...capitals, ...landmarks].sort(() => 0.5 - Math.random());
 }
 
+// Daily seeded pseudo-random generator
+function getDailySeed() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+function seededRandom(seed) {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+export function generateDailyQuestions() {
+  const seed = getDailySeed();
+  const pool = [...COUNTRIES];
+  // Seeded shuffle
+  const shuffled = pool
+    .map((item, idx) => ({ item, sort: seededRandom(seed + idx) }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ item }) => item);
+
+  const selected = shuffled.slice(0, 5);
+
+  return selected.map((country, idx) => {
+    const wrongOptions = getRandomOptions(pool, 3, country).map((c) => c.name);
+    const options = [country.name, ...wrongOptions].sort(() => 0.5 - Math.random());
+
+    if (idx < 2) {
+      // Flag
+      return {
+        type: "flag",
+        question: "Daily Challenge: Which country does this flag belong to?",
+        flagUrl: `https://flagcdn.com/w320/${country.code}.png`,
+        correctAnswer: country.name,
+        options,
+        hint: `Continent: ${country.continent} | Capital: ${country.capital}`,
+        funFact: country.funFact,
+        countryData: country,
+      };
+    } else if (idx < 4) {
+      // Capital
+      return {
+        type: "capital",
+        question: `Daily Challenge: What is the capital city of ${country.name}?`,
+        correctAnswer: country.capital,
+        options: [country.capital, ...getRandomOptions(pool, 3, country).map((c) => c.capital)].sort(() => 0.5 - Math.random()),
+        hint: `Located in ${country.continent}`,
+        funFact: country.funFact,
+        countryData: country,
+      };
+    } else {
+      // Landmark
+      return {
+        type: "landmark",
+        question: `Daily Challenge: In which country is "${country.landmark}"?`,
+        correctAnswer: country.name,
+        options,
+        hint: `Continent: ${country.continent} | Capital: ${country.capital}`,
+        funFact: country.funFact,
+        countryData: country,
+      };
+    }
+  });
+}
+
+// Weak Spot Management
+export function getMissedCountries() {
+  try {
+    const raw = localStorage.getItem("country_quiz_missed_countries");
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveMissedCountry(countryName) {
+  if (!countryName) return;
+  const list = new Set(getMissedCountries());
+  list.add(countryName);
+  localStorage.setItem("country_quiz_missed_countries", JSON.stringify(Array.from(list)));
+}
+
+export function clearMissedCountry(countryName) {
+  const list = new Set(getMissedCountries());
+  list.delete(countryName);
+  localStorage.setItem("country_quiz_missed_countries", JSON.stringify(Array.from(list)));
+}
+
+export function generateWeakSpotQuestions() {
+  const missedNames = getMissedCountries();
+  const pool = COUNTRIES.filter((c) => missedNames.includes(c.name));
+
+  if (pool.length === 0) {
+    return generateMixedQuestions(5, "All");
+  }
+
+  return pool.slice(0, 10).map((country) => {
+    const wrongOptions = getRandomOptions(COUNTRIES, 3, country).map((c) => c.name);
+    const options = [country.name, ...wrongOptions].sort(() => 0.5 - Math.random());
+
+    return {
+      type: "flag",
+      question: `Revision: Identify the flag of ${country.name}`,
+      flagUrl: `https://flagcdn.com/w320/${country.code}.png`,
+      correctAnswer: country.name,
+      options,
+      hint: `Capital: ${country.capital} | ${country.continent}`,
+      funFact: country.funFact,
+      countryData: country,
+    };
+  });
+}
+
 // Fetch by mode
 export async function fetchQuestionsByMode(
   mode,
@@ -556,6 +668,12 @@ export async function fetchQuestionsByMode(
   difficulty = "medium",
   continent = "All"
 ) {
+  if (mode === "daily") {
+    return generateDailyQuestions();
+  }
+  if (mode === "revision") {
+    return generateWeakSpotQuestions();
+  }
   if (mode === "flags") {
     return generateFlagQuestions(count, continent);
   }
