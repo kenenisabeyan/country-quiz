@@ -17,6 +17,7 @@ export default function CompletePage({
   onRestart,
   onOpenSettings,
   onInspectCountry,
+  onOpenCertificate,
 }) {
   const [showReview, setShowReview] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -113,6 +114,13 @@ export default function CompletePage({
             className="flex-1 min-w-[130px] bg-gradient-to-r from-[#E65895] to-[#BC6BE8] hover:from-[#d84f8a] hover:to-[#ab5fd6] text-white font-bold py-3 px-5 rounded-2xl shadow-lg shadow-purple-500/25 transition-all transform active:scale-95 cursor-pointer text-sm"
           >
             🔄 Play Again
+          </button>
+
+          <button
+            onClick={onOpenCertificate}
+            className="bg-[#25284B] hover:bg-[#343964] border border-[#BC6BE8]/40 text-[#BC6BE8] font-bold py-3 px-4 rounded-2xl transition-all cursor-pointer text-xs sm:text-sm flex items-center gap-1.5 shadow-sm"
+          >
+            🎓 Certificate
           </button>
 
           <button

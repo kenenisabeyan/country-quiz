@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import CheckIcon from "./assets/Check_round_fill.svg";
 import CrossIcon from "./assets/Close_round_fill.svg";
@@ -11,10 +11,14 @@ import GameSettingsModal from "./components/GameSettingsModal";
 import StatsModal from "./components/StatsModal";
 import CountryFactModal from "./components/CountryFactModal";
 import StudyDeckModal from "./components/StudyDeckModal";
+import AchievementsModal from "./components/AchievementsModal";
+import CertificateModal from "./components/CertificateModal";
+import Toast from "./components/Toast";
 import { fetchQuestionsByMode } from "./data/countryData";
 import { sound } from "./utils/sound";
 import { preloadImages } from "./utils/imagePreloader";
 import { haptics } from "./utils/haptics";
+import { evaluateAchievements } from "./utils/achievements";
 
 const DEFAULT_STATS = {
   gamesPlayed: 0,
@@ -54,11 +58,19 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isStudyDeckOpen, setIsStudyDeckOpen] = useState(false);
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+  const [isCertificateOpen, setIsCertificateOpen] = useState(false);
   const [inspectedCountry, setInspectedCountry] = useState(null);
+
+  // Toast notifications for achievements
+  const [toasts, setToasts] = useState([]);
 
   // Audio & Stats
   const [isMuted, setIsMuted] = useState(false);
   const [stats, setStats] = useState(DEFAULT_STATS);
+
+  // Track fastest answer in session for speed demon achievement
+  const fastestTimeLeftRef = useRef(0);
 
   // Lifelines & hints
   const [lifelines, setLifelines] = useState({ fiftyFifty: 1, hint: 1, skip: 1 });
@@ -82,6 +94,20 @@ function App() {
     setIsMuted(sound.isMuted());
   }, []);
 
+  const triggerAchievementCheck = useCallback((currentStats, sessionData) => {
+    const { newlyUnlocked } = evaluateAchievements(currentStats, sessionData);
+    if (newlyUnlocked.length > 0) {
+      sound.playLifeline();
+      newlyUnlocked.forEach((ach) => {
+        const toastItem = { ...ach, id: `${ach.id}_${Date.now()}` };
+        setToasts((prev) => [...prev, toastItem]);
+        setTimeout(() => {
+          setToasts((prev) => prev.filter((t) => t.id !== toastItem.id));
+        }, 5000);
+      });
+    }
+  }, []);
+
   const saveCareerStats = useCallback((points, answers, bestStreakSession, survived) => {
     setStats((prev) => {
       const correctSession = answers.filter((a) => a.isCorrect).length;
@@ -94,9 +120,17 @@ function App() {
         survivalRecord: Math.max(prev.survivalRecord || 0, survived || 0),
       };
       localStorage.setItem("country_quiz_career_stats", JSON.stringify(updated));
+
+      const accuracy = answers.length > 0 ? Math.round((correctSession / answers.length) * 100) : 0;
+      triggerAchievementCheck(updated, {
+        totalQuestions: answers.length,
+        accuracy,
+        fastestTimeLeft: fastestTimeLeftRef.current,
+      });
+
       return updated;
     });
-  }, []);
+  }, [triggerAchievementCheck]);
 
   const handleResetStats = () => {
     localStorage.removeItem("country_quiz_career_stats");
@@ -126,8 +160,8 @@ function App() {
       setQuizCompleted(false);
       setTimeLeft(15);
       setIsTimerActive(customSettings.hasTimer);
+      fastestTimeLeftRef.current = 0;
 
-      // Preload the first few flag images immediately
       const flagsToPreload = data
         .slice(0, 4)
         .map((q) => q.flagUrl)
@@ -144,7 +178,7 @@ function App() {
     loadQuestions();
   }, [loadQuestions]);
 
-  // Preload upcoming flags as user advances
+  // Preload upcoming flags
   useEffect(() => {
     if (questions.length > 0) {
       const upcoming = [
@@ -206,6 +240,10 @@ function App() {
     setIsTimerActive(false);
     const isCorrect = selectedOption === questions[current].correctAnswer;
 
+    if (timeLeft > fastestTimeLeftRef.current) {
+      fastestTimeLeftRef.current = timeLeft;
+    }
+
     let updatedLives = lives;
     let nextStreak = streak;
 
@@ -243,7 +281,6 @@ function App() {
     ];
     setUserAnswers(newAnswers);
 
-    // If survival lives hit 0, end quiz immediately
     if (settings.mode === "survival" && updatedLives <= 0) {
       setTimeout(() => {
         setQuizCompleted(true);
@@ -252,11 +289,10 @@ function App() {
       return;
     }
 
-    // Auto advance
     setTimeout(() => {
       moveToNextUnanswered(newAnswers);
     }, 1100);
-  }, [userAnswers, current, quizCompleted, questions, lives, streak, maxStreak, settings, timeLeft, saveCareerStats, score, moveToNextUnanswered]);
+  }, [userAnswers, current, quizCompleted, questions, timeLeft, lives, streak, maxStreak, settings, saveCareerStats, score, moveToNextUnanswered]);
 
   const handleTimeUp = useCallback(() => {
     const alreadyAnswered = userAnswers.some((a) => a.questionIndex === current);
@@ -344,6 +380,8 @@ function App() {
         isSettingsOpen ||
         isStatsOpen ||
         isStudyDeckOpen ||
+        isAchievementsOpen ||
+        isCertificateOpen ||
         inspectedCountry ||
         quizCompleted ||
         isLoading
@@ -377,6 +415,8 @@ function App() {
     isSettingsOpen,
     isStatsOpen,
     isStudyDeckOpen,
+    isAchievementsOpen,
+    isCertificateOpen,
     inspectedCountry,
     quizCompleted,
     isLoading,
@@ -421,6 +461,9 @@ function App() {
     }
   };
 
+  const correctCount = userAnswers.filter((a) => a.isCorrect).length;
+  const currentAccuracy = userAnswers.length > 0 ? Math.round((correctCount / userAnswers.length) * 100) : 0;
+
   if (isLoading) {
     return (
       <div
@@ -452,6 +495,7 @@ function App() {
           onRestart={() => loadQuestions()}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onInspectCountry={(country) => setInspectedCountry(country)}
+          onOpenCertificate={() => setIsCertificateOpen(true)}
         />
         <GameSettingsModal
           isOpen={isSettingsOpen}
@@ -464,6 +508,15 @@ function App() {
           isOpen={!!inspectedCountry}
           onClose={() => setInspectedCountry(null)}
         />
+        <CertificateModal
+          isOpen={isCertificateOpen}
+          onClose={() => setIsCertificateOpen(false)}
+          score={score}
+          accuracy={currentAccuracy}
+          rankTitle="Master Cartographer"
+          modeTitle={getModeTitle()}
+        />
+        <Toast toasts={toasts} onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
       </div>
     );
   }
@@ -473,10 +526,11 @@ function App() {
       className="min-h-screen bg-cover bg-center flex justify-center items-center text-[#E2E4F3] p-3 sm:p-6 font-['Be_Vietnam_Pro',sans-serif]"
       style={{ backgroundImage: `url(${bgImage})` }}
     >
-      {/* Screen Reader Live Region for Accessibility */}
       <div className="sr-only" role="status" aria-live="polite">
         {announcement}
       </div>
+
+      <Toast toasts={toasts} onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
 
       <main className="w-full max-w-3xl bg-[#202446]/95 border border-[#3A4072] rounded-3xl sm:rounded-4xl p-5 sm:p-9 shadow-2xl backdrop-blur-lg">
         {/* Header */}
@@ -490,6 +544,7 @@ function App() {
           onOpenSettings={() => setIsSettingsOpen(true)}
           onOpenStats={() => setIsStatsOpen(true)}
           onOpenStudyDeck={() => setIsStudyDeckOpen(true)}
+          onOpenAchievements={() => setIsAchievementsOpen(true)}
           modeTitle={getModeTitle()}
         />
 
@@ -696,6 +751,12 @@ function App() {
         isOpen={isStudyDeckOpen}
         onClose={() => setIsStudyDeckOpen(false)}
         onSelectCountryToQuiz={handleLaunchContinentQuiz}
+      />
+
+      {/* Achievements Trophy Room Modal */}
+      <AchievementsModal
+        isOpen={isAchievementsOpen}
+        onClose={() => setIsAchievementsOpen(false)}
       />
     </div>
   );

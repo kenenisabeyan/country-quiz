@@ -11,6 +11,7 @@ export default function Header({
   onOpenSettings,
   onOpenStats,
   onOpenStudyDeck,
+  onOpenAchievements,
   modeTitle,
 }) {
   return (
@@ -74,6 +75,16 @@ export default function Header({
           <span>🏆</span>
           <span>{score} pts</span>
         </div>
+
+        {/* Achievements Trophy Room Button */}
+        <button
+          onClick={onOpenAchievements}
+          title="Trophy Room & Achievements"
+          aria-label="Open Trophy Room"
+          className="p-2 rounded-full bg-[#2A2F57] hover:bg-[#3D447D] focus:ring-2 focus:ring-[#BC6BE8] focus:outline-none text-white transition-all transform active:scale-95 cursor-pointer border border-[#444D87] text-xs sm:text-sm"
+        >
+          🏆
+        </button>
 
         {/* Atlas / Study Deck Button */}
         <button
