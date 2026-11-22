@@ -13,12 +13,14 @@ import CountryFactModal from "./components/CountryFactModal";
 import StudyDeckModal from "./components/StudyDeckModal";
 import AchievementsModal from "./components/AchievementsModal";
 import CertificateModal from "./components/CertificateModal";
+import WorldMapRadar from "./components/WorldMapRadar";
 import Toast from "./components/Toast";
-import { fetchQuestionsByMode } from "./data/countryData";
+import { fetchQuestionsByMode, saveMissedCountry, clearMissedCountry } from "./data/countryData";
 import { sound } from "./utils/sound";
 import { preloadImages } from "./utils/imagePreloader";
 import { haptics } from "./utils/haptics";
 import { evaluateAchievements } from "./utils/achievements";
+import { getActiveTheme } from "./utils/themes";
 
 const DEFAULT_STATS = {
   gamesPlayed: 0,
@@ -39,8 +41,11 @@ function App() {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Screen reader announcer message
+  // Screen reader announcement
   const [announcement, setAnnouncement] = useState("");
+
+  // Visual Theme
+  const [activeTheme, setActiveThemeState] = useState(getActiveTheme());
 
   // Survival Mode
   const [lives, setLives] = useState(3);
@@ -69,7 +74,6 @@ function App() {
   const [isMuted, setIsMuted] = useState(false);
   const [stats, setStats] = useState(DEFAULT_STATS);
 
-  // Track fastest answer in session for speed demon achievement
   const fastestTimeLeftRef = useRef(0);
 
   // Lifelines & hints
@@ -81,7 +85,7 @@ function App() {
   const [timeLeft, setTimeLeft] = useState(15);
   const [isTimerActive, setIsTimerActive] = useState(false);
 
-  // Load stats from localStorage
+  // Load stats & theme from localStorage
   useEffect(() => {
     try {
       const savedStats = localStorage.getItem("country_quiz_career_stats");
@@ -92,6 +96,7 @@ function App() {
       // fallback to default
     }
     setIsMuted(sound.isMuted());
+    setActiveThemeState(getActiveTheme());
   }, []);
 
   const triggerAchievementCheck = useCallback((currentStats, sessionData) => {
@@ -135,6 +140,11 @@ function App() {
   const handleResetStats = () => {
     localStorage.removeItem("country_quiz_career_stats");
     setStats(DEFAULT_STATS);
+  };
+
+  const handleImportStats = (imported) => {
+    setStats(imported);
+    localStorage.setItem("country_quiz_career_stats", JSON.stringify(imported));
   };
 
   const loadQuestions = useCallback(async (customSettings = settings) => {
@@ -250,6 +260,7 @@ function App() {
     if (isCorrect) {
       sound.playCorrect();
       haptics.success();
+      clearMissedCountry(questions[current].correctAnswer);
       nextStreak = streak + 1;
       setStreak(nextStreak);
       if (nextStreak > maxStreak) {
@@ -264,6 +275,7 @@ function App() {
     } else {
       setStreak(0);
       haptics.error();
+      saveMissedCountry(questions[current].correctAnswer);
       if (settings.mode === "survival") {
         sound.playLifeLost();
         updatedLives = lives - 1;
@@ -300,6 +312,7 @@ function App() {
 
     setStreak(0);
     haptics.error();
+    saveMissedCountry(questions[current]?.correctAnswer);
     let updatedLives = lives;
 
     if (settings.mode === "survival") {
@@ -440,12 +453,28 @@ function App() {
     loadQuestions(updated);
   };
 
+  const handlePracticeWeakSpots = () => {
+    const updated = { ...settings, mode: "revision" };
+    setSettings(updated);
+    loadQuestions(updated);
+  };
+
+  const handleLaunchDaily = () => {
+    const updated = { ...settings, mode: "daily" };
+    setSettings(updated);
+    loadQuestions(updated);
+  };
+
   const currentQ = questions[current];
   const isAnswered = userAnswers.some((a) => a.questionIndex === current);
   const currentAnswer = userAnswers.find((a) => a.questionIndex === current);
 
   const getModeTitle = () => {
     switch (settings.mode) {
+      case "daily":
+        return "📅 Daily Global Challenge";
+      case "revision":
+        return "🎯 Weak Spot Revision Deck";
       case "flags":
         return `🚩 Flag Master (${settings.continent})`;
       case "capitals":
@@ -502,6 +531,7 @@ function App() {
           onClose={() => setIsSettingsOpen(false)}
           settings={settings}
           onSaveSettings={handleSaveSettings}
+          onThemeChange={(th) => setActiveThemeState(th)}
         />
         <CountryFactModal
           country={inspectedCountry}
@@ -532,7 +562,13 @@ function App() {
 
       <Toast toasts={toasts} onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
 
-      <main className="w-full max-w-3xl bg-[#202446]/95 border border-[#3A4072] rounded-3xl sm:rounded-4xl p-5 sm:p-9 shadow-2xl backdrop-blur-lg">
+      <main
+        className="w-full max-w-3xl border rounded-3xl sm:rounded-4xl p-5 sm:p-9 shadow-2xl backdrop-blur-lg transition-colors duration-500"
+        style={{
+          backgroundColor: `${activeTheme.colors.bgCard}f0`,
+          borderColor: activeTheme.colors.border,
+        }}
+      >
         {/* Header */}
         <Header
           score={score}
@@ -545,6 +581,7 @@ function App() {
           onOpenStats={() => setIsStatsOpen(true)}
           onOpenStudyDeck={() => setIsStudyDeckOpen(true)}
           onOpenAchievements={() => setIsAchievementsOpen(true)}
+          onLaunchDaily={handleLaunchDaily}
           modeTitle={getModeTitle()}
         />
 
@@ -589,7 +626,14 @@ function App() {
         )}
 
         {/* Question Container */}
-        <section aria-label="Current question" className="bg-[#2B2F57] py-6 sm:py-7 px-4 sm:px-7 rounded-2xl border border-[#3E457C] shadow-inner space-y-5">
+        <section
+          aria-label="Current question"
+          className="py-6 sm:py-7 px-4 sm:px-7 rounded-2xl border shadow-inner space-y-5 transition-colors duration-500"
+          style={{
+            backgroundColor: activeTheme.colors.bgSubtle,
+            borderColor: activeTheme.colors.border,
+          }}
+        >
           {/* Timer Bar */}
           {settings.hasTimer && (
             <Timer
@@ -609,7 +653,7 @@ function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25 }}
-              className="space-y-5"
+              className="space-y-4"
             >
               {/* Question Text */}
               <div className="text-center space-y-3">
@@ -631,6 +675,13 @@ function App() {
                       loading="eager"
                     />
                   </motion.div>
+                )}
+
+                {/* World Map Radar Locator when continent is available */}
+                {currentQ?.countryData?.continent && (
+                  <div className="flex justify-center py-0.5">
+                    <WorldMapRadar activeContinent={currentQ.countryData.continent} />
+                  </div>
                 )}
 
                 {/* Country Fact Sheet Button during gameplay */}
@@ -729,6 +780,7 @@ function App() {
         onClose={() => setIsSettingsOpen(false)}
         settings={settings}
         onSaveSettings={handleSaveSettings}
+        onThemeChange={(th) => setActiveThemeState(th)}
       />
 
       {/* Career Stats Modal */}
@@ -737,6 +789,8 @@ function App() {
         onClose={() => setIsStatsOpen(false)}
         stats={stats}
         onResetStats={handleResetStats}
+        onImportStats={handleImportStats}
+        onPracticeWeakSpots={handlePracticeWeakSpots}
       />
 
       {/* Country Fact Sheet Modal */}
