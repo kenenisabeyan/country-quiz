@@ -12,6 +12,7 @@ export default function Header({
   onOpenStats,
   onOpenStudyDeck,
   onOpenAchievements,
+  onLaunchDaily,
   modeTitle,
 }) {
   return (
@@ -75,6 +76,19 @@ export default function Header({
           <span>🏆</span>
           <span>{score} pts</span>
         </div>
+
+        {/* Daily Challenge Quick Button */}
+        {onLaunchDaily && (
+          <button
+            onClick={onLaunchDaily}
+            title="Play Today's Seeded Daily Challenge"
+            aria-label="Play Daily Challenge"
+            className="hidden md:flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#2A2F57] hover:bg-[#3D447D] text-[#BC6BE8] hover:text-white font-bold text-xs border border-[#BC6BE8]/40 cursor-pointer transition-all shadow-sm active:scale-95"
+          >
+            <span>📅</span>
+            <span>Daily</span>
+          </button>
+        )}
 
         {/* Achievements Trophy Room Button */}
         <button
