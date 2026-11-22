@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import CheckIcon from "./assets/Check_round_fill.svg";
 import CrossIcon from "./assets/Close_round_fill.svg";
 import bgImage from "./assets/bg.jpg";
+import StartScreen from "./components/StartScreen";
 import CompletePage from "./components/CompletePage";
 import Header from "./components/Header";
 import Timer from "./components/Timer";
@@ -32,14 +33,14 @@ const DEFAULT_STATS = {
 };
 
 function App() {
+  const [gameState, setGameState] = useState("menu"); // "menu" | "playing" | "completed"
   const [current, setCurrent] = useState(0);
   const [questions, setQuestions] = useState([]);
   const [userAnswers, setUserAnswers] = useState([]);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
-  const [quizCompleted, setQuizCompleted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Screen reader announcement
   const [announcement, setAnnouncement] = useState("");
@@ -93,7 +94,7 @@ function App() {
         setStats(JSON.parse(savedStats));
       }
     } catch {
-      // fallback to default
+      // fallback
     }
     setIsMuted(sound.isMuted());
     setActiveThemeState(getActiveTheme());
@@ -149,6 +150,7 @@ function App() {
 
   const loadQuestions = useCallback(async (customSettings = settings) => {
     setIsLoading(true);
+    setGameState("playing");
     try {
       const qCount = customSettings.mode === "survival" ? 50 : customSettings.questionCount;
       const data = await fetchQuestionsByMode(
@@ -167,7 +169,6 @@ function App() {
       setLifelines({ fiftyFifty: 1, hint: 1, skip: 1 });
       setHiddenOptions([]);
       setShowHint(false);
-      setQuizCompleted(false);
       setTimeLeft(15);
       setIsTimerActive(customSettings.hasTimer);
       fastestTimeLeftRef.current = 0;
@@ -184,10 +185,6 @@ function App() {
     }
   }, [settings]);
 
-  useEffect(() => {
-    loadQuestions();
-  }, [loadQuestions]);
-
   // Preload upcoming flags
   useEffect(() => {
     if (questions.length > 0) {
@@ -203,22 +200,22 @@ function App() {
 
   // Check completion
   useEffect(() => {
-    if (questions.length > 0 && userAnswers.length === questions.length && !quizCompleted) {
-      setQuizCompleted(true);
+    if (gameState === "playing" && questions.length > 0 && userAnswers.length === questions.length) {
+      setGameState("completed");
       setIsTimerActive(false);
       saveCareerStats(score, userAnswers, maxStreak, userAnswers.length);
     }
-  }, [userAnswers, questions.length, quizCompleted, score, maxStreak, saveCareerStats]);
+  }, [userAnswers, questions.length, gameState, score, maxStreak, saveCareerStats]);
 
   // Reset timer on question switch
   useEffect(() => {
-    if (settings.hasTimer && !quizCompleted && !isLoading) {
+    if (settings.hasTimer && gameState === "playing" && !isLoading) {
       setTimeLeft(15);
       setIsTimerActive(true);
     }
     setHiddenOptions([]);
     setShowHint(false);
-  }, [current, settings.hasTimer, quizCompleted, isLoading]);
+  }, [current, settings.hasTimer, gameState, isLoading]);
 
   const handleToggleSound = () => {
     const muted = sound.toggleMute();
@@ -245,7 +242,7 @@ function App() {
 
   const handleAnswer = useCallback((selectedOption) => {
     const alreadyAnswered = userAnswers.some((a) => a.questionIndex === current);
-    if (alreadyAnswered || quizCompleted || !questions[current]) return;
+    if (alreadyAnswered || gameState !== "playing" || !questions[current]) return;
 
     setIsTimerActive(false);
     const isCorrect = selectedOption === questions[current].correctAnswer;
@@ -295,7 +292,7 @@ function App() {
 
     if (settings.mode === "survival" && updatedLives <= 0) {
       setTimeout(() => {
-        setQuizCompleted(true);
+        setGameState("completed");
         saveCareerStats(score, newAnswers, maxStreak, newAnswers.length);
       }, 1000);
       return;
@@ -304,11 +301,11 @@ function App() {
     setTimeout(() => {
       moveToNextUnanswered(newAnswers);
     }, 1100);
-  }, [userAnswers, current, quizCompleted, questions, timeLeft, lives, streak, maxStreak, settings, saveCareerStats, score, moveToNextUnanswered]);
+  }, [userAnswers, current, gameState, questions, timeLeft, lives, streak, maxStreak, settings, saveCareerStats, score, moveToNextUnanswered]);
 
   const handleTimeUp = useCallback(() => {
     const alreadyAnswered = userAnswers.some((a) => a.questionIndex === current);
-    if (alreadyAnswered || quizCompleted) return;
+    if (alreadyAnswered || gameState !== "playing") return;
 
     setStreak(0);
     haptics.error();
@@ -333,7 +330,7 @@ function App() {
 
     if (settings.mode === "survival" && updatedLives <= 0) {
       setTimeout(() => {
-        setQuizCompleted(true);
+        setGameState("completed");
         saveCareerStats(score, newAnswers, maxStreak, newAnswers.length);
       }, 1000);
       return;
@@ -342,7 +339,7 @@ function App() {
     setTimeout(() => {
       moveToNextUnanswered(newAnswers);
     }, 1200);
-  }, [current, userAnswers, quizCompleted, settings.mode, lives, score, maxStreak, saveCareerStats, moveToNextUnanswered, questions]);
+  }, [current, userAnswers, gameState, settings.mode, lives, score, maxStreak, saveCareerStats, moveToNextUnanswered, questions]);
 
   // Lifelines
   const handleUseFiftyFifty = useCallback(() => {
@@ -396,7 +393,7 @@ function App() {
         isAchievementsOpen ||
         isCertificateOpen ||
         inspectedCountry ||
-        quizCompleted ||
+        gameState !== "playing" ||
         isLoading
       ) {
         return;
@@ -431,7 +428,7 @@ function App() {
     isAchievementsOpen,
     isCertificateOpen,
     inspectedCountry,
-    quizCompleted,
+    gameState,
     isLoading,
     questions,
     current,
@@ -493,26 +490,259 @@ function App() {
   const correctCount = userAnswers.filter((a) => a.isCorrect).length;
   const currentAccuracy = userAnswers.length > 0 ? Math.round((correctCount / userAnswers.length) * 100) : 0;
 
-  if (isLoading) {
-    return (
-      <div
-        className="min-h-screen bg-cover bg-center flex flex-col justify-center items-center text-[#E2E4F3] p-6 font-['Be_Vietnam_Pro',sans-serif]"
-        style={{ backgroundImage: `url(${bgImage})` }}
-      >
-        <div className="bg-[#2D325A]/90 p-8 rounded-3xl border border-[#444A7F] flex flex-col items-center gap-4 shadow-2xl backdrop-blur-md">
+  return (
+    <div
+      className="min-h-screen bg-cover bg-center flex justify-center items-center text-[#E2E4F3] p-3 sm:p-6 font-['Be_Vietnam_Pro',sans-serif]"
+      style={{ backgroundImage: `url(${bgImage})` }}
+    >
+      <div className="sr-only" role="status" aria-live="polite">
+        {announcement}
+      </div>
+
+      <Toast toasts={toasts} onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
+
+      {/* 1. START / LANDING MENU SCREEN */}
+      {gameState === "menu" && (
+        <StartScreen
+          stats={stats}
+          onStartGame={(modeId) => {
+            const updated = { ...settings, mode: modeId };
+            setSettings(updated);
+            loadQuestions(updated);
+          }}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenAtlas={() => setIsStudyDeckOpen(true)}
+          onOpenTrophies={() => setIsAchievementsOpen(true)}
+          onOpenStats={() => setIsStatsOpen(true)}
+        />
+      )}
+
+      {/* 2. LOADING SCREEN */}
+      {isLoading && (
+        <div className="bg-[#2D325A]/95 p-8 rounded-3xl border border-[#444A7F] flex flex-col items-center gap-4 shadow-2xl backdrop-blur-md">
           <div className="w-12 h-12 border-4 border-[#BC6BE8] border-t-transparent rounded-full animate-spin" />
           <p className="text-base font-bold tracking-wide">Assembling Geography Expedition...</p>
         </div>
-      </div>
-    );
-  }
+      )}
 
-  if (quizCompleted) {
-    return (
-      <div
-        className="min-h-screen bg-cover bg-center flex justify-center items-center text-[#E2E4F3] p-4 font-['Be_Vietnam_Pro',sans-serif]"
-        style={{ backgroundImage: `url(${bgImage})` }}
-      >
+      {/* 3. GAMEPLAY SCREEN */}
+      {gameState === "playing" && !isLoading && (
+        <main
+          className="w-full max-w-3xl border rounded-3xl sm:rounded-4xl p-5 sm:p-9 shadow-2xl backdrop-blur-lg transition-colors duration-500"
+          style={{
+            backgroundColor: `${activeTheme.colors.bgCard}f0`,
+            borderColor: activeTheme.colors.border,
+          }}
+        >
+          {/* Header */}
+          <Header
+            score={score}
+            streak={streak}
+            lives={lives}
+            isSurvivalMode={settings.mode === "survival"}
+            isMuted={isMuted}
+            onToggleSound={handleToggleSound}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenStats={() => setIsStatsOpen(true)}
+            onOpenStudyDeck={() => setIsStudyDeckOpen(true)}
+            onOpenAchievements={() => setIsAchievementsOpen(true)}
+            onLaunchDaily={handleLaunchDaily}
+            onGoHome={() => setGameState("menu")}
+            modeTitle={getModeTitle()}
+          />
+
+          {/* Progress & Question Selector (in non-survival mode) */}
+          {settings.mode !== "survival" && (
+            <nav aria-label="Question progress" className="mb-5">
+              <div className="flex justify-between items-center text-xs text-[#9DA3D1] mb-2 font-semibold">
+                <span>Question {current + 1} of {questions.length}</span>
+                <span>{Math.round(((current) / questions.length) * 100)}% Completed</span>
+              </div>
+
+              <ul className="flex gap-2 flex-wrap justify-center py-1">
+                {questions.map((_, index) => {
+                  const answer = userAnswers.find((a) => a.questionIndex === index);
+                  let statusBg = "bg-[#2D335E] border-transparent text-[#9DA3D1]";
+
+                  if (index === current) {
+                    statusBg = "bg-gradient-to-r from-[#E65895] to-[#BC6BE8] text-white ring-2 ring-white/70 shadow-md";
+                  } else if (answer) {
+                    statusBg = answer.isCorrect
+                      ? "bg-emerald-600/80 text-white"
+                      : "bg-rose-600/80 text-white";
+                  }
+
+                  return (
+                    <li
+                      key={index}
+                      onClick={() => {
+                        haptics.light();
+                        setCurrent(index);
+                      }}
+                      role="button"
+                      aria-label={`Jump to question ${index + 1}`}
+                      className={`cursor-pointer rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-xs font-bold transition-all transform hover:scale-105 ${statusBg}`}
+                    >
+                      {index + 1}
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          )}
+
+          {/* Question Container */}
+          <section
+            aria-label="Current question"
+            className="py-6 sm:py-7 px-4 sm:px-7 rounded-2xl border shadow-inner space-y-5 transition-colors duration-500"
+            style={{
+              backgroundColor: activeTheme.colors.bgSubtle,
+              borderColor: activeTheme.colors.border,
+            }}
+          >
+            {/* Timer Bar */}
+            {settings.hasTimer && (
+              <Timer
+                duration={15}
+                timeLeft={timeLeft}
+                setTimeLeft={setTimeLeft}
+                isActive={isTimerActive && !isAnswered}
+                onTimeUp={handleTimeUp}
+              />
+            )}
+
+            {/* Animated Question & Options */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={current}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-4"
+              >
+                {/* Question Text */}
+                <div className="text-center space-y-3">
+                  <h2 className="text-lg sm:text-2xl font-bold text-white px-2 leading-relaxed">
+                    {currentQ?.question}
+                  </h2>
+
+                  {/* Flag Image Display with instant preloaded cache */}
+                  {currentQ?.flagUrl && (
+                    <motion.div
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="flex justify-center"
+                    >
+                      <img
+                        src={currentQ.flagUrl}
+                        alt="National Country Flag"
+                        className="h-24 sm:h-32 rounded-xl shadow-xl border-2 border-white/20 object-cover"
+                        loading="eager"
+                      />
+                    </motion.div>
+                  )}
+
+                  {/* World Map Radar Locator when continent is available */}
+                  {currentQ?.countryData?.continent && (
+                    <div className="flex justify-center py-0.5">
+                      <WorldMapRadar activeContinent={currentQ.countryData.continent} />
+                    </div>
+                  )}
+
+                  {/* Country Fact Sheet Button during gameplay */}
+                  {currentQ?.countryData && isAnswered && (
+                    <button
+                      onClick={() => setInspectedCountry(currentQ.countryData)}
+                      className="inline-flex items-center gap-1.5 bg-[#3B4275] hover:bg-[#4C5596] text-purple-200 text-xs px-3 py-1.5 rounded-xl border border-purple-400/30 font-semibold cursor-pointer transition-all"
+                    >
+                      <span>ℹ️ Explore {currentQ.countryData.name} Fact Sheet</span>
+                    </button>
+                  )}
+
+                  {/* Hint Display */}
+                  {showHint && currentQ?.hint && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      role="note"
+                      className="inline-block bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs px-4 py-1.5 rounded-xl"
+                    >
+                      💡 Hint: {currentQ.hint}
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Options Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {currentQ?.options.map((option, i) => {
+                    const isHidden = hiddenOptions.includes(option);
+                    const isCorrectAnswer = option === currentQ.correctAnswer;
+                    const isSelected = currentAnswer?.selectedOption === option;
+
+                    let btnStyle = "bg-[#383E6E] hover:bg-[#484F8C] text-white border-[#4A5291]";
+                    if (isAnswered) {
+                      if (isCorrectAnswer) {
+                        btnStyle = "bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-600/30";
+                      } else if (isSelected) {
+                        btnStyle = "bg-rose-600 border-rose-400 text-white shadow-lg shadow-rose-600/30";
+                      } else {
+                        btnStyle = "bg-[#25284B] opacity-50 border-transparent text-gray-400";
+                      }
+                    }
+
+                    if (isHidden) {
+                      return (
+                        <div
+                          key={i}
+                          className="py-3.5 px-4 rounded-2xl border border-dashed border-gray-700/40 opacity-20 pointer-events-none"
+                        />
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => handleAnswer(option)}
+                        disabled={isAnswered}
+                        aria-pressed={isSelected}
+                        className={`text-left p-3.5 sm:p-4 rounded-2xl border font-medium text-xs sm:text-sm transition-all duration-200 flex items-center justify-between cursor-pointer active:scale-98 focus:outline-none focus:ring-2 focus:ring-[#BC6BE8] ${btnStyle}`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[11px] font-bold text-gray-300">
+                            {String.fromCharCode(65 + i)}
+                          </span>
+                          <span>{option}</span>
+                        </div>
+
+                        {isAnswered && (isCorrectAnswer || isSelected) && (
+                          <img
+                            src={isCorrectAnswer ? CheckIcon : CrossIcon}
+                            alt={isCorrectAnswer ? "Correct" : "Incorrect"}
+                            className="w-4 h-4 flex-shrink-0 ml-2"
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Lifelines Bar */}
+            <Lifelines
+              lifelines={lifelines}
+              onUseFiftyFifty={handleUseFiftyFifty}
+              onUseHint={handleUseHint}
+              onUseSkip={handleUseSkip}
+              disabled={isAnswered}
+            />
+          </section>
+        </main>
+      )}
+
+      {/* 4. RESULTS / COMPLETE SCREEN */}
+      {gameState === "completed" && (
         <CompletePage
           score={score}
           totalQuestions={settings.mode === "survival" ? userAnswers.length : questions.length}
@@ -525,256 +755,11 @@ function App() {
           onOpenSettings={() => setIsSettingsOpen(true)}
           onInspectCountry={(country) => setInspectedCountry(country)}
           onOpenCertificate={() => setIsCertificateOpen(true)}
+          onGoHome={() => setGameState("menu")}
         />
-        <GameSettingsModal
-          isOpen={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          settings={settings}
-          onSaveSettings={handleSaveSettings}
-          onThemeChange={(th) => setActiveThemeState(th)}
-        />
-        <CountryFactModal
-          country={inspectedCountry}
-          isOpen={!!inspectedCountry}
-          onClose={() => setInspectedCountry(null)}
-        />
-        <CertificateModal
-          isOpen={isCertificateOpen}
-          onClose={() => setIsCertificateOpen(false)}
-          score={score}
-          accuracy={currentAccuracy}
-          rankTitle="Master Cartographer"
-          modeTitle={getModeTitle()}
-        />
-        <Toast toasts={toasts} onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
-      </div>
-    );
-  }
+      )}
 
-  return (
-    <div
-      className="min-h-screen bg-cover bg-center flex justify-center items-center text-[#E2E4F3] p-3 sm:p-6 font-['Be_Vietnam_Pro',sans-serif]"
-      style={{ backgroundImage: `url(${bgImage})` }}
-    >
-      <div className="sr-only" role="status" aria-live="polite">
-        {announcement}
-      </div>
-
-      <Toast toasts={toasts} onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
-
-      <main
-        className="w-full max-w-3xl border rounded-3xl sm:rounded-4xl p-5 sm:p-9 shadow-2xl backdrop-blur-lg transition-colors duration-500"
-        style={{
-          backgroundColor: `${activeTheme.colors.bgCard}f0`,
-          borderColor: activeTheme.colors.border,
-        }}
-      >
-        {/* Header */}
-        <Header
-          score={score}
-          streak={streak}
-          lives={lives}
-          isSurvivalMode={settings.mode === "survival"}
-          isMuted={isMuted}
-          onToggleSound={handleToggleSound}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenStats={() => setIsStatsOpen(true)}
-          onOpenStudyDeck={() => setIsStudyDeckOpen(true)}
-          onOpenAchievements={() => setIsAchievementsOpen(true)}
-          onLaunchDaily={handleLaunchDaily}
-          modeTitle={getModeTitle()}
-        />
-
-        {/* Progress & Question Selector (in non-survival mode) */}
-        {settings.mode !== "survival" && (
-          <nav aria-label="Question progress" className="mb-5">
-            <div className="flex justify-between items-center text-xs text-[#9DA3D1] mb-2 font-semibold">
-              <span>Question {current + 1} of {questions.length}</span>
-              <span>{Math.round(((current) / questions.length) * 100)}% Completed</span>
-            </div>
-
-            <ul className="flex gap-2 flex-wrap justify-center py-1">
-              {questions.map((_, index) => {
-                const answer = userAnswers.find((a) => a.questionIndex === index);
-                let statusBg = "bg-[#2D335E] border-transparent text-[#9DA3D1]";
-
-                if (index === current) {
-                  statusBg = "bg-gradient-to-r from-[#E65895] to-[#BC6BE8] text-white ring-2 ring-white/70 shadow-md";
-                } else if (answer) {
-                  statusBg = answer.isCorrect
-                    ? "bg-emerald-600/80 text-white"
-                    : "bg-rose-600/80 text-white";
-                }
-
-                return (
-                  <li
-                    key={index}
-                    onClick={() => {
-                      haptics.light();
-                      setCurrent(index);
-                    }}
-                    role="button"
-                    aria-label={`Jump to question ${index + 1}`}
-                    className={`cursor-pointer rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-xs font-bold transition-all transform hover:scale-105 ${statusBg}`}
-                  >
-                    {index + 1}
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        )}
-
-        {/* Question Container */}
-        <section
-          aria-label="Current question"
-          className="py-6 sm:py-7 px-4 sm:px-7 rounded-2xl border shadow-inner space-y-5 transition-colors duration-500"
-          style={{
-            backgroundColor: activeTheme.colors.bgSubtle,
-            borderColor: activeTheme.colors.border,
-          }}
-        >
-          {/* Timer Bar */}
-          {settings.hasTimer && (
-            <Timer
-              duration={15}
-              timeLeft={timeLeft}
-              setTimeLeft={setTimeLeft}
-              isActive={isTimerActive && !isAnswered}
-              onTimeUp={handleTimeUp}
-            />
-          )}
-
-          {/* Animated Question & Options */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={current}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.25 }}
-              className="space-y-4"
-            >
-              {/* Question Text */}
-              <div className="text-center space-y-3">
-                <h2 className="text-lg sm:text-2xl font-bold text-white px-2 leading-relaxed">
-                  {currentQ?.question}
-                </h2>
-
-                {/* Flag Image Display with instant preloaded cache */}
-                {currentQ?.flagUrl && (
-                  <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="flex justify-center"
-                  >
-                    <img
-                      src={currentQ.flagUrl}
-                      alt="National Country Flag"
-                      className="h-24 sm:h-32 rounded-xl shadow-xl border-2 border-white/20 object-cover"
-                      loading="eager"
-                    />
-                  </motion.div>
-                )}
-
-                {/* World Map Radar Locator when continent is available */}
-                {currentQ?.countryData?.continent && (
-                  <div className="flex justify-center py-0.5">
-                    <WorldMapRadar activeContinent={currentQ.countryData.continent} />
-                  </div>
-                )}
-
-                {/* Country Fact Sheet Button during gameplay */}
-                {currentQ?.countryData && isAnswered && (
-                  <button
-                    onClick={() => setInspectedCountry(currentQ.countryData)}
-                    className="inline-flex items-center gap-1.5 bg-[#3B4275] hover:bg-[#4C5596] text-purple-200 text-xs px-3 py-1.5 rounded-xl border border-purple-400/30 font-semibold cursor-pointer transition-all"
-                  >
-                    <span>ℹ️ Explore {currentQ.countryData.name} Fact Sheet</span>
-                  </button>
-                )}
-
-                {/* Hint Display */}
-                {showHint && currentQ?.hint && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    role="note"
-                    className="inline-block bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs px-4 py-1.5 rounded-xl"
-                  >
-                    💡 Hint: {currentQ.hint}
-                  </motion.div>
-                )}
-              </div>
-
-              {/* Options Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                {currentQ?.options.map((option, i) => {
-                  const isHidden = hiddenOptions.includes(option);
-                  const isCorrectAnswer = option === currentQ.correctAnswer;
-                  const isSelected = currentAnswer?.selectedOption === option;
-
-                  let btnStyle = "bg-[#383E6E] hover:bg-[#484F8C] text-white border-[#4A5291]";
-                  if (isAnswered) {
-                    if (isCorrectAnswer) {
-                      btnStyle = "bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-600/30";
-                    } else if (isSelected) {
-                      btnStyle = "bg-rose-600 border-rose-400 text-white shadow-lg shadow-rose-600/30";
-                    } else {
-                      btnStyle = "bg-[#25284B] opacity-50 border-transparent text-gray-400";
-                    }
-                  }
-
-                  if (isHidden) {
-                    return (
-                      <div
-                        key={i}
-                        className="py-3.5 px-4 rounded-2xl border border-dashed border-gray-700/40 opacity-20 pointer-events-none"
-                      />
-                    );
-                  }
-
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => handleAnswer(option)}
-                      disabled={isAnswered}
-                      aria-pressed={isSelected}
-                      className={`text-left p-3.5 sm:p-4 rounded-2xl border font-medium text-xs sm:text-sm transition-all duration-200 flex items-center justify-between cursor-pointer active:scale-98 focus:outline-none focus:ring-2 focus:ring-[#BC6BE8] ${btnStyle}`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[11px] font-bold text-gray-300">
-                          {String.fromCharCode(65 + i)}
-                        </span>
-                        <span>{option}</span>
-                      </div>
-
-                      {isAnswered && (isCorrectAnswer || isSelected) && (
-                        <img
-                          src={isCorrectAnswer ? CheckIcon : CrossIcon}
-                          alt={isCorrectAnswer ? "Correct" : "Incorrect"}
-                          className="w-4 h-4 flex-shrink-0 ml-2"
-                        />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Lifelines Bar */}
-          <Lifelines
-            lifelines={lifelines}
-            onUseFiftyFifty={handleUseFiftyFifty}
-            onUseHint={handleUseHint}
-            onUseSkip={handleUseSkip}
-            disabled={isAnswered}
-          />
-        </section>
-      </main>
-
-      {/* Settings Modal */}
+      {/* MODALS */}
       <GameSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
@@ -783,7 +768,6 @@ function App() {
         onThemeChange={(th) => setActiveThemeState(th)}
       />
 
-      {/* Career Stats Modal */}
       <StatsModal
         isOpen={isStatsOpen}
         onClose={() => setIsStatsOpen(false)}
@@ -793,24 +777,30 @@ function App() {
         onPracticeWeakSpots={handlePracticeWeakSpots}
       />
 
-      {/* Country Fact Sheet Modal */}
       <CountryFactModal
         country={inspectedCountry}
         isOpen={!!inspectedCountry}
         onClose={() => setInspectedCountry(null)}
       />
 
-      {/* Study Deck & World Atlas Modal */}
       <StudyDeckModal
         isOpen={isStudyDeckOpen}
         onClose={() => setIsStudyDeckOpen(false)}
         onSelectCountryToQuiz={handleLaunchContinentQuiz}
       />
 
-      {/* Achievements Trophy Room Modal */}
       <AchievementsModal
         isOpen={isAchievementsOpen}
         onClose={() => setIsAchievementsOpen(false)}
+      />
+
+      <CertificateModal
+        isOpen={isCertificateOpen}
+        onClose={() => setIsCertificateOpen(false)}
+        score={score}
+        accuracy={currentAccuracy}
+        rankTitle="Master Cartographer"
+        modeTitle={getModeTitle()}
       />
     </div>
   );
