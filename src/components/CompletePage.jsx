@@ -42,6 +42,8 @@ export default function CompletePage({
   };
 
   const gradeInfo = getGrade();
+
+  const getRank = () => {
     if (isSurvivalMode) {
       if (survivedCount >= 15) return { title: "👑 Geography Legend", desc: "Immortal knowledge of the globe!" };
       if (survivedCount >= 10) return { title: "🧭 Seasoned Navigator", desc: "Exceptional survival skills!" };
@@ -83,9 +85,14 @@ export default function CompletePage({
         />
 
         <div className="space-y-1.5">
-          <span className="text-[11px] uppercase font-extrabold tracking-widest text-[#BC6BE8] bg-[#BC6BE8]/10 px-3 py-1 rounded-full border border-[#BC6BE8]/30">
-            {rank.title}
-          </span>
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            <span className="text-[11px] uppercase font-extrabold tracking-widest text-[#BC6BE8] bg-[#BC6BE8]/10 px-3 py-1 rounded-full border border-[#BC6BE8]/30">
+              {rank.title}
+            </span>
+            <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border ${gradeInfo.color}`}>
+              Grade: {gradeInfo.grade} ({gradeInfo.label})
+            </span>
+          </div>
           <h2 className="text-2xl sm:text-3xl font-black text-[#E2E4F3] mt-2">
             {isSurvivalMode ? "Game Over — Survival Run" : "Quiz Completed!"}
           </h2>
@@ -124,6 +131,15 @@ export default function CompletePage({
           >
             🔄 Play Again
           </button>
+
+          {onGoHome && (
+            <button
+              onClick={onGoHome}
+              className="bg-[#25284B] hover:bg-[#343964] border border-[#444A7F] text-white font-semibold py-3 px-4 rounded-2xl transition-all cursor-pointer text-xs sm:text-sm"
+            >
+              🏠 Menu
+            </button>
+          )}
 
           <button
             onClick={onOpenCertificate}

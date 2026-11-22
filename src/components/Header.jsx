@@ -13,6 +13,7 @@ export default function Header({
   onOpenStudyDeck,
   onOpenAchievements,
   onLaunchDaily,
+  onGoHome,
   modeTitle,
 }) {
   return (
@@ -30,6 +31,17 @@ export default function Header({
       </div>
 
       <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-center">
+        {/* Home / Menu Button */}
+        {onGoHome && (
+          <button
+            onClick={onGoHome}
+            title="Return to Main Menu"
+            aria-label="Return to Main Menu"
+            className="p-2 rounded-full bg-[#2A2F57] hover:bg-[#3D447D] focus:ring-2 focus:ring-[#BC6BE8] focus:outline-none text-white transition-all transform active:scale-95 cursor-pointer border border-[#444D87] text-xs sm:text-sm"
+          >
+            🏠
+          </button>
+        )}
         {/* Survival Lives Indicator */}
         {isSurvivalMode && (
           <div
