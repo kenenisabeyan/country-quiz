@@ -1,8 +1,10 @@
-// Web Audio API synthesizer for zero-dependency sound effects
+// Web Audio API synthesizer with volume and mute control
 class SoundController {
   constructor() {
     this.ctx = null;
     this.muted = localStorage.getItem("country_quiz_muted") === "true";
+    const savedVol = localStorage.getItem("country_quiz_volume");
+    this.volume = savedVol ? parseFloat(savedVol) : 0.8;
   }
 
   init() {
@@ -27,12 +29,22 @@ class SoundController {
     return this.muted;
   }
 
+  setVolume(vol) {
+    this.volume = Math.max(0, Math.min(1, vol));
+    localStorage.setItem("country_quiz_volume", this.volume.toString());
+  }
+
+  getVolume() {
+    return this.volume;
+  }
+
   playCorrect() {
     if (this.muted) return;
     this.init();
     if (!this.ctx) return;
 
     const now = this.ctx.currentTime;
+    const gainBase = 0.12 * this.volume;
     const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
     notes.forEach((freq, idx) => {
       const osc = this.ctx.createOscillator();
@@ -40,7 +52,7 @@ class SoundController {
       osc.type = "sine";
       osc.frequency.setValueAtTime(freq, now + idx * 0.06);
 
-      gain.gain.setValueAtTime(0.12, now + idx * 0.06);
+      gain.gain.setValueAtTime(gainBase, now + idx * 0.06);
       gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.28);
 
       osc.connect(gain);
@@ -64,7 +76,7 @@ class SoundController {
     osc.frequency.setValueAtTime(180, now);
     osc.frequency.exponentialRampToValueAtTime(105, now + 0.28);
 
-    gain.gain.setValueAtTime(0.14, now);
+    gain.gain.setValueAtTime(0.14 * this.volume, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
 
     osc.connect(gain);
@@ -80,13 +92,14 @@ class SoundController {
     if (!this.ctx) return;
 
     const now = this.ctx.currentTime;
+    const gainBase = 0.12 * this.volume;
     [220, 196, 174].forEach((freq, idx) => {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = "sawtooth";
       osc.frequency.setValueAtTime(freq, now + idx * 0.1);
 
-      gain.gain.setValueAtTime(0.12, now + idx * 0.1);
+      gain.gain.setValueAtTime(gainBase, now + idx * 0.1);
       gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.18);
 
       osc.connect(gain);
@@ -109,7 +122,7 @@ class SoundController {
     osc.type = "sine";
     osc.frequency.setValueAtTime(800, now);
 
-    gain.gain.setValueAtTime(0.04, now);
+    gain.gain.setValueAtTime(0.04 * this.volume, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
 
     osc.connect(gain);
@@ -132,7 +145,7 @@ class SoundController {
     osc.frequency.setValueAtTime(320, now);
     osc.frequency.exponentialRampToValueAtTime(960, now + 0.2);
 
-    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.setValueAtTime(0.1 * this.volume, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
 
     osc.connect(gain);
@@ -147,6 +160,7 @@ class SoundController {
     this.init();
     if (!this.ctx) return;
 
+    const gainBase = 0.08 * this.volume;
     const chords = [
       { notes: [523.25, 659.25, 783.99], time: 0 },
       { notes: [587.33, 739.99, 880.0], time: 0.18 },
@@ -162,7 +176,7 @@ class SoundController {
         const start = this.ctx.currentTime + time;
         osc.frequency.setValueAtTime(freq, start);
 
-        gain.gain.setValueAtTime(0.08, start);
+        gain.gain.setValueAtTime(gainBase, start);
         gain.gain.exponentialRampToValueAtTime(0.001, start + 0.45);
 
         osc.connect(gain);
