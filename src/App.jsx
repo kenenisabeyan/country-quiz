@@ -261,8 +261,9 @@ function App() {
   }, [current, userAnswers, quizCompleted, settings.mode, lives, score, maxStreak, saveCareerStats, moveToNextUnanswered]);
 
   // Lifelines
-  const handleUseFiftyFifty = () => {
-    if (lifelines.fiftyFifty <= 0 || isAnswered || !questions[current]) return;
+  const handleUseFiftyFifty = useCallback(() => {
+    const alreadyAnswered = userAnswers.some((a) => a.questionIndex === current);
+    if (lifelines.fiftyFifty <= 0 || alreadyAnswered || !questions[current]) return;
     const currentQ = questions[current];
     const incorrectOptions = currentQ.options.filter(
       (opt) => opt !== currentQ.correctAnswer
@@ -273,16 +274,18 @@ function App() {
 
     setHiddenOptions(toHide);
     setLifelines((prev) => ({ ...prev, fiftyFifty: prev.fiftyFifty - 1 }));
-  };
+  }, [lifelines.fiftyFifty, userAnswers, current, questions]);
 
-  const handleUseHint = () => {
-    if (lifelines.hint <= 0 || isAnswered) return;
+  const handleUseHint = useCallback(() => {
+    const alreadyAnswered = userAnswers.some((a) => a.questionIndex === current);
+    if (lifelines.hint <= 0 || alreadyAnswered) return;
     setShowHint(true);
     setLifelines((prev) => ({ ...prev, hint: prev.hint - 1 }));
-  };
+  }, [lifelines.hint, userAnswers, current]);
 
-  const handleUseSkip = () => {
-    if (lifelines.skip <= 0 || isAnswered) return;
+  const handleUseSkip = useCallback(() => {
+    const alreadyAnswered = userAnswers.some((a) => a.questionIndex === current);
+    if (lifelines.skip <= 0 || alreadyAnswered) return;
     setLifelines((prev) => ({ ...prev, skip: prev.skip - 1 }));
 
     const newAnswers = [
@@ -291,7 +294,7 @@ function App() {
     ];
     setUserAnswers(newAnswers);
     moveToNextUnanswered(newAnswers);
-  };
+  }, [lifelines.skip, userAnswers, current, moveToNextUnanswered]);
 
   // Keyboard shortcut listener
   useEffect(() => {
@@ -331,6 +334,9 @@ function App() {
     current,
     hiddenOptions,
     handleAnswer,
+    handleUseHint,
+    handleUseFiftyFifty,
+    handleUseSkip,
   ]);
 
   const handleSaveSettings = (newSettings) => {
@@ -417,7 +423,6 @@ function App() {
         <Header
           score={score}
           streak={streak}
-          highScore={stats.totalScore || 0}
           lives={lives}
           isSurvivalMode={settings.mode === "survival"}
           isMuted={isMuted}

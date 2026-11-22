@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 export default function Header({
   score,
   streak,
-  highScore,
   lives,
   isSurvivalMode,
   isMuted,

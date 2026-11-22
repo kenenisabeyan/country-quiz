@@ -8,7 +8,6 @@ import CrossIcon from "../assets/Close_round_fill.svg";
 
 export default function CompletePage({
   score,
-  maxPossibleScore,
   totalQuestions,
   userAnswers,
   questions,
