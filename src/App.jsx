@@ -15,6 +15,7 @@ import StudyDeckModal from "./components/StudyDeckModal";
 import AchievementsModal from "./components/AchievementsModal";
 import CertificateModal from "./components/CertificateModal";
 import WorldMapRadar from "./components/WorldMapRadar";
+import PopulationClash from "./components/PopulationClash";
 import Toast from "./components/Toast";
 import { fetchQuestionsByMode, saveMissedCountry, clearMissedCountry } from "./data/countryData";
 import { sound } from "./utils/sound";
@@ -22,6 +23,7 @@ import { preloadImages } from "./utils/imagePreloader";
 import { haptics } from "./utils/haptics";
 import { evaluateAchievements } from "./utils/achievements";
 import { getActiveTheme } from "./utils/themes";
+import { getLanguage, setLanguage, t } from "./utils/i18n";
 
 const DEFAULT_STATS = {
   gamesPlayed: 0,
