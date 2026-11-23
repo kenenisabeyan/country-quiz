@@ -82,6 +82,7 @@ function App() {
   const [isStudyDeckOpen, setIsStudyDeckOpen] = useState(false);
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isCertificateOpen, setIsCertificateOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [inspectedCountry, setInspectedCountry] = useState(null);
 
   // Toast notifications for achievements
