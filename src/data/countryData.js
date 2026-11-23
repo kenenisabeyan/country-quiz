@@ -661,6 +661,46 @@ export function generateWeakSpotQuestions() {
   });
 }
 
+function parsePopCount(str) {
+  if (!str) return 0;
+  if (str.includes("Billion")) {
+    return parseFloat(str) * 1000000000;
+  }
+  if (str.includes("Million")) {
+    return parseFloat(str) * 1000000;
+  }
+  return parseInt(str.replace(/,/g, ""), 10) || 0;
+}
+
+export function generateHigherLowerQuestions(count = 10, continent = "All") {
+  const pool = getFilteredCountries(continent);
+  const questions = [];
+  const shuffled = [...pool].sort(() => 0.5 - Math.random());
+
+  for (let i = 0; i < Math.min(count, Math.floor(shuffled.length / 2)); i++) {
+    const countryA = shuffled[i * 2];
+    const countryB = shuffled[i * 2 + 1];
+    if (!countryA || !countryB) break;
+
+    const popA = parsePopCount(countryA.population);
+    const popB = parsePopCount(countryB.population);
+    const isHigherA = popA >= popB;
+    const correctAnswer = isHigherA ? countryA.name : countryB.name;
+
+    questions.push({
+      type: "higherLower",
+      question: "Which nation has a higher population?",
+      correctAnswer,
+      options: [countryA.name, countryB.name],
+      clashData: { countryA, countryB },
+      hint: `${countryA.name} (${countryA.continent}) vs ${countryB.name} (${countryB.continent})`,
+      funFact: `${countryA.name} (~${countryA.population}) vs ${countryB.name} (~${countryB.population})`,
+      countryData: isHigherA ? countryA : countryB,
+    });
+  }
+  return questions;
+}
+
 // Fetch by mode
 export async function fetchQuestionsByMode(
   mode,
@@ -668,6 +708,9 @@ export async function fetchQuestionsByMode(
   difficulty = "medium",
   continent = "All"
 ) {
+  if (mode === "higherLower") {
+    return generateHigherLowerQuestions(count, continent);
+  }
   if (mode === "daily") {
     return generateDailyQuestions();
   }
