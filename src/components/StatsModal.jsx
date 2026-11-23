@@ -1,6 +1,7 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getMissedCountries } from "../data/countryData";
+import { AVATARS, getSelectedAvatar, setSelectedAvatar } from "../utils/avatars";
 
 export default function StatsModal({
   isOpen,
@@ -9,8 +10,10 @@ export default function StatsModal({
   onResetStats,
   onImportStats,
   onPracticeWeakSpots,
+  onAvatarSelect,
 }) {
   const fileInputRef = useRef(null);
+  const [currentAvatar, setCurrentAvatar] = useState(getSelectedAvatar());
 
   if (!isOpen) return null;
 
@@ -18,6 +21,12 @@ export default function StatsModal({
   const totalCorrect = stats.totalCorrect || 0;
   const accuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
   const missedCountries = getMissedCountries();
+
+  const handleChooseAvatar = (avatar) => {
+    setSelectedAvatar(avatar.id);
+    setCurrentAvatar(avatar);
+    if (onAvatarSelect) onAvatarSelect(avatar);
+  };
 
   const handleExport = () => {
     const payload = {
@@ -69,6 +78,12 @@ export default function StatsModal({
     reader.readAsText(file);
   };
 
+  // Generate 28 mock-relative activity blocks based on gamesPlayed
+  const activityDays = Array.from({ length: 28 }, (_, i) => {
+    const isActive = (i + 1) * 3 <= (stats.gamesPlayed || 0) || i === 27;
+    return { day: i + 1, active: isActive };
+  });
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm overflow-y-auto">
@@ -76,12 +91,15 @@ export default function StatsModal({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-[#242749] border border-[#3E4577] text-white w-full max-w-md rounded-3xl p-6 sm:p-7 shadow-2xl space-y-5 my-auto"
+          className="bg-[#242749] border border-[#3E4577] text-white w-full max-w-md rounded-3xl p-5 sm:p-7 shadow-2xl space-y-4 my-auto max-h-[90vh] overflow-y-auto"
         >
           <div className="flex justify-between items-center pb-2 border-b border-[#3E4577]">
             <div className="flex items-center gap-2">
               <span className="text-xl">📊</span>
-              <h2 className="text-2xl font-bold tracking-tight">Career Statistics</h2>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Career &amp; Explorer Dossier</h2>
+                <p className="text-[11px] text-[#9DA3D1]">Achievements, habits &amp; telemetry</p>
+              </div>
             </div>
             <button
               onClick={onClose}
@@ -91,6 +109,30 @@ export default function StatsModal({
             </button>
           </div>
 
+          {/* Avatar Selector */}
+          <div className="bg-[#1C1F3D] p-3 rounded-2xl border border-[#343B6D] space-y-2">
+            <p className="text-[11px] text-[#8E97CF] font-bold uppercase tracking-wider">
+              Explorer Persona: {currentAvatar.title}
+            </p>
+            <div className="flex justify-between items-center gap-1.5 overflow-x-auto py-0.5">
+              {AVATARS.map((av) => (
+                <button
+                  key={av.id}
+                  onClick={() => handleChooseAvatar(av)}
+                  title={av.title}
+                  className={`p-2 rounded-xl text-xl transition-all cursor-pointer border ${
+                    currentAvatar.id === av.id
+                      ? "bg-[#BC6BE8]/20 border-[#BC6BE8] scale-110 shadow-md"
+                      : "bg-[#171A33] border-[#2E3463] hover:border-gray-500 opacity-70"
+                  }`}
+                >
+                  {av.icon}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-2.5">
             <div className="bg-[#1C1F3D] p-3 rounded-2xl border border-[#343B6D] text-center">
               <p className="text-[11px] text-[#8E97CF]">Games Played</p>
@@ -107,6 +149,27 @@ export default function StatsModal({
             <div className="bg-[#1C1F3D] p-3 rounded-2xl border border-[#343B6D] text-center">
               <p className="text-[11px] text-[#8E97CF]">Best Streak</p>
               <p className="text-2xl font-black text-amber-400 mt-0.5">🔥 {stats.bestStreak || 0}</p>
+            </div>
+          </div>
+
+          {/* 28-Day Habit Activity Heatmap */}
+          <div className="bg-[#1C1F3D] p-3 rounded-2xl border border-[#343B6D] space-y-1.5">
+            <div className="flex justify-between items-center text-[11px]">
+              <span className="text-[#8E97CF] font-bold">📅 4-Week Activity Log</span>
+              <span className="text-emerald-400 font-semibold">Active Streak</span>
+            </div>
+            <div className="grid grid-cols-7 gap-1 pt-1">
+              {activityDays.map((d) => (
+                <div
+                  key={d.day}
+                  className={`h-4 rounded-md transition-all ${
+                    d.active
+                      ? "bg-emerald-500 shadow-sm shadow-emerald-500/50"
+                      : "bg-[#252A52]"
+                  }`}
+                  title={`Day ${d.day}`}
+                />
+              ))}
             </div>
           </div>
 
