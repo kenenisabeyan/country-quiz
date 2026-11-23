@@ -403,12 +403,29 @@ function App() {
   // Keyboard shortcut listener
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setIsSettingsOpen(false);
+        setIsStatsOpen(false);
+        setIsStudyDeckOpen(false);
+        setIsAchievementsOpen(false);
+        setIsCertificateOpen(false);
+        setIsShortcutsOpen(false);
+        setInspectedCountry(null);
+        return;
+      }
+
+      if (e.key === "?") {
+        setIsShortcutsOpen((prev) => !prev);
+        return;
+      }
+
       if (
         isSettingsOpen ||
         isStatsOpen ||
         isStudyDeckOpen ||
         isAchievementsOpen ||
         isCertificateOpen ||
+        isShortcutsOpen ||
         inspectedCountry ||
         gameState !== "playing" ||
         isLoading
@@ -417,6 +434,21 @@ function App() {
       }
 
       const key = e.key.toUpperCase();
+      if (key === "M") {
+        handleToggleSound();
+        return;
+      }
+      if (key === "B") {
+        handleToggleBGM();
+        return;
+      }
+      if (key === "P") {
+        if (questions[current]?.countryData) {
+          speakText(questions[current].countryData.name, currentLang);
+        }
+        return;
+      }
+
       const currentQ = questions[current];
       if (!currentQ || !currentQ.options) return;
 
