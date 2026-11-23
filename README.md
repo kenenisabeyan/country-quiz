@@ -80,6 +80,8 @@
 | **🚩 Flag Master** | `flags` | Guess the nation belonging to the displayed national flag. | 15s Timer / Relaxed |
 | **🏛️ Capital Cities** | `capitals` | Match sovereign countries with their official capitals. | 15s Timer / Relaxed |
 | **🗺️ Wonders & Sites** | `landmarks` | Identify nations based on famous wonders and landmarks. | 15s Timer / Relaxed |
+| **📊 Population Clash** | `higherLower` | Predict which of two nations has a higher population head-to-head. | 15s Timer / Relaxed |
+| **⚔️ 2-Player Versus** | `versus` | Local pass-and-play duel mode between Player 1 and Player 2! | Alternating Turns |
 | **📅 Daily Challenge** | `daily` | 5 globally synchronized questions refreshed daily. | 15s Timer |
 | **🎯 Weak Spot Revision** | `revision` | Personalized drill targeting your past mistakes. | 15s Timer / Relaxed |
 | **🏆 Survival Mode** | `survival` | Sudden-death marathon with 3 lives. Go as far as you can! | 3 Lives / 15s Timer |
@@ -96,11 +98,13 @@
 ├───────────────────────┬────────────────────────────────────────────────┤
 │ 🚀 Asset Preloading   │ Next 2 question flags pre-cached in background │
 │ 🛡️ Fault Tolerance   │ Top-level ErrorBoundary with graceful recovery │
-│ 🔊 Audio Synthesizer  │ Zero-dependency real-time Web Audio API        │
+│ 🔊 Audio Synthesizer  │ Zero-dependency real-time Web Audio API + BGM  │
+│ 🗣️ Speech Engine      │ Web Speech API for native country pronunciations│
 │ 📳 Mobile Haptics     │ Native Vibration API integration for feedback  │
-│ ♿ Accessibility (a11y)│ Screen-reader live regions & ARIA semantics    │
+│ ♿ Accessibility (a11y)│ Screen-reader live regions & keyboard control  │
 │ 💾 Data Portability   │ Full profile export/import as JSON             │
-│ 📱 PWA Support        │ manifest.json + theme color standalone ready   │
+│ 🖼️ Canvas PNG Render  │ Client-side 1200x800 certificate image export   │
+│ 📱 Offline PWA        │ Service Worker caching + manifest.json         │
 └───────────────────────┴────────────────────────────────────────────────┘
 ```
 
