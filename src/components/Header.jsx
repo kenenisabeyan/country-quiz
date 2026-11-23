@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { t } from "../utils/i18n";
 
 export default function Header({
   score,
@@ -52,7 +53,7 @@ export default function Header({
             aria-label={`${lives} lives remaining`}
             className="flex items-center gap-1 bg-[#251A2E] border border-rose-500/30 px-3 py-1.5 rounded-full text-xs font-bold text-rose-400 shadow-sm"
           >
-            <span>Lives:</span>
+            <span>{t("lives", currentLang)}:</span>
             <div className="flex gap-0.5">
               {[1, 2, 3].map((heartIndex) => (
                 <span
@@ -78,7 +79,7 @@ export default function Header({
             className="flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-extrabold px-3 py-1.5 rounded-full text-xs shadow-md shadow-orange-500/20"
           >
             <span>🔥</span>
-            <span>{streak}x Streak</span>
+            <span>{streak}x {t("combo", currentLang)}</span>
           </motion.div>
         )}
 
@@ -89,7 +90,7 @@ export default function Header({
           className="flex items-center bg-gradient-to-r from-[#E65895] to-[#BC6BE8] text-white font-bold rounded-full px-3.5 py-1.5 gap-1.5 shadow-md shadow-purple-500/20 text-xs sm:text-sm"
         >
           <span>🏆</span>
-          <span>{score} pts</span>
+          <span>{score} {t("points", currentLang)}</span>
         </div>
 
         {/* Daily Challenge Quick Button */}

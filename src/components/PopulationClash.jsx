@@ -16,7 +16,7 @@ export default function PopulationClash({
 
   const { countryA, countryB } = clashData;
 
-  const renderCard = (country, isLeft) => {
+  const renderCard = (country) => {
     const isSelected = currentAnswer?.selectedOption === country.name;
     const isWinner = country.name === correctAnswer;
 
@@ -113,7 +113,7 @@ export default function PopulationClash({
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-1 w-full max-w-xl mx-auto">
-      {renderCard(countryA, true)}
+      {renderCard(countryA)}
 
       {/* VS Emblem */}
       <div className="flex flex-col items-center justify-center flex-shrink-0">
@@ -122,7 +122,7 @@ export default function PopulationClash({
         </div>
       </div>
 
-      {renderCard(countryB, false)}
+      {renderCard(countryB)}
     </div>
   );
 }

@@ -23,7 +23,7 @@ import { preloadImages } from "./utils/imagePreloader";
 import { haptics } from "./utils/haptics";
 import { evaluateAchievements } from "./utils/achievements";
 import { getActiveTheme } from "./utils/themes";
-import { getLanguage, setLanguage, t } from "./utils/i18n";
+import { getLanguage, t } from "./utils/i18n";
 
 const DEFAULT_STATS = {
   gamesPlayed: 0,
