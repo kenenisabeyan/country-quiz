@@ -59,10 +59,10 @@ function App() {
   // Background Ambient Music
   const [isBgmActive, setIsBgmActive] = useState(sound.isBGMActive());
 
-  const handleToggleBGM = () => {
+  const handleToggleBGM = useCallback(() => {
     const active = sound.toggleBGM();
     setIsBgmActive(active);
-  };
+  }, []);
 
   // Survival Mode
   const [lives, setLives] = useState(3);
@@ -234,10 +234,10 @@ function App() {
     setShowHint(false);
   }, [current, settings.hasTimer, gameState, isLoading]);
 
-  const handleToggleSound = () => {
+  const handleToggleSound = useCallback(() => {
     const muted = sound.toggleMute();
     setIsMuted(muted);
-  };
+  }, []);
 
   const moveToNextUnanswered = useCallback((answers) => {
     let nextIdx = current + 1;
