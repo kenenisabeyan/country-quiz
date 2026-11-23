@@ -5,6 +5,7 @@ import { triggerConfetti } from "../utils/confetti";
 import { sound } from "../utils/sound";
 import CheckIcon from "../assets/Check_round_fill.svg";
 import CrossIcon from "../assets/Close_round_fill.svg";
+import PerformanceTelemetry from "./PerformanceTelemetry";
 
 export default function CompletePage({
   score,
@@ -122,6 +123,9 @@ export default function CompletePage({
             <p className="text-xl font-black text-amber-400">🔥 {maxStreak || 0}</p>
           </div>
         </div>
+
+        {/* Telemetry Graph */}
+        <PerformanceTelemetry userAnswers={userAnswers} />
 
         {/* Action Buttons */}
         <div className="flex flex-wrap justify-center items-center gap-2.5 w-full mt-1">
