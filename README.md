@@ -162,6 +162,11 @@ Designed for desktop power-users:
 | <kbd>H</kbd> | Use **💡 Hint** Lifeline |
 | <kbd>F</kbd> | Use **⚖️ 50:50** Lifeline |
 | <kbd>S</kbd> | Use **⏭️ Skip** Lifeline |
+| <kbd>P</kbd> | **🔊 Pronounce** Country / Capital aloud |
+| <kbd>M</kbd> | Toggle **Audio SFX** Mute |
+| <kbd>B</kbd> | Toggle **Ambient BGM** |
+| <kbd>?</kbd> | Open **Keyboard Navigation Guide** |
+| <kbd>Esc</kbd> | Close Any Open Modal Dialog |
 
 ---
 
@@ -171,18 +176,23 @@ Designed for desktop power-users:
 src/
 ├── components/
 │   ├── AchievementsModal.jsx     # Trophy room with progress bars
-│   ├── CertificateModal.jsx      # Printable official certificate
+│   ├── CertificateModal.jsx      # Printable official certificate & PNG export
 │   ├── CompletePage.jsx          # Performance grade, rank, & breakdown
-│   ├── CountryFactModal.jsx      # Detailed country fact sheet
+│   ├── CountryFactModal.jsx      # Detailed country fact sheet with pronunciation
 │   ├── ErrorBoundary.jsx         # Component-level crash catcher
-│   ├── GameSettingsModal.jsx     # Mode, continent, theme, & volume controls
+│   ├── GameSettingsModal.jsx     # Mode, language, theme, volume & BGM
 │   ├── Header.jsx                # Lives, combo streak, audio, and shortcuts
 │   ├── Lifelines.jsx             # 50:50, Hint, and Skip buttons
+│   ├── PerformanceTelemetry.jsx  # SVG response-time chart & metrics
+│   ├── PopulationClash.jsx       # Head-to-head population battle cards
+│   ├── ShortcutsModal.jsx        # Keyboard navigation cheat sheet
 │   ├── StartScreen.jsx           # Main menu dashboard & XP progress
-│   ├── StatsModal.jsx            # Career metrics & JSON export/import
+│   ├── StatsModal.jsx            # 28-day habit heatmap, avatar & JSON backup
 │   ├── StudyDeckModal.jsx        # Searchable Atlas with continent filters
 │   ├── Timer.jsx                 # Animated countdown timer with tick audio
 │   ├── Toast.jsx                 # Celebratory achievement unlock popups
+│   ├── VersusDuel.jsx            # 2-Player local pass & play duel arena
+│   └── WorldMapRadar.jsx         # Vector world map continent radar sweep
 │   └── WorldMapRadar.jsx         # Stylized vector world map continent locator
 ├── data/
 │   └── countryData.js            # 80+ countries dataset + question generators
