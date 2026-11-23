@@ -1,6 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import WorldMapRadar from "./WorldMapRadar";
+import { speakText } from "../utils/speech";
 
 export default function CountryFactModal({ country, isOpen, onClose }) {
   if (!isOpen || !country) return null;
@@ -20,9 +21,20 @@ export default function CountryFactModal({ country, isOpen, onClose }) {
               <span className="text-[10px] font-bold uppercase tracking-widest text-[#BC6BE8] bg-[#BC6BE8]/15 px-2.5 py-0.5 rounded-full border border-[#BC6BE8]/30">
                 {country.continent || "World"}
               </span>
-              <h2 className="text-xl sm:text-2xl font-black mt-1 text-white flex items-center gap-2">
-                {country.name}
-              </h2>
+              <div className="flex items-center gap-2 mt-1">
+                <h2 className="text-xl sm:text-2xl font-black text-white">
+                  {country.name}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => speakText(`${country.name}. Capital: ${country.capital}`)}
+                  title="Listen to pronunciation"
+                  aria-label={`Pronounce ${country.name}`}
+                  className="p-1.5 rounded-full bg-[#393F73] hover:bg-[#4C5499] text-xs text-purple-200 transition-colors cursor-pointer active:scale-95"
+                >
+                  🔊
+                </button>
+              </div>
             </div>
             <button
               onClick={onClose}
