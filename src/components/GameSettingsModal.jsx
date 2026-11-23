@@ -2,6 +2,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { sound } from "../utils/sound";
 import { THEMES, getActiveTheme, setActiveTheme } from "../utils/themes";
+import { LANGUAGES, getLanguage, setLanguage, t } from "../utils/i18n";
 
 export default function GameSettingsModal({
   isOpen,
@@ -9,6 +10,7 @@ export default function GameSettingsModal({
   settings,
   onSaveSettings,
   onThemeChange,
+  onLanguageChange,
 }) {
   const [mode, setMode] = React.useState(settings.mode || "flags");
   const [continent, setContinent] = React.useState(settings.continent || "All");
@@ -16,7 +18,9 @@ export default function GameSettingsModal({
   const [difficulty, setDifficulty] = React.useState(settings.difficulty || "medium");
   const [hasTimer, setHasTimer] = React.useState(settings.hasTimer ?? true);
   const [volume, setVolume] = React.useState(Math.round(sound.getVolume() * 100));
+  const [bgmActive, setBgmActive] = React.useState(sound.isBGMActive());
   const [currentTheme, setCurrentTheme] = React.useState(getActiveTheme().id);
+  const [currentLang, setCurrentLang] = React.useState(getLanguage());
 
   if (!isOpen) return null;
 
@@ -26,11 +30,24 @@ export default function GameSettingsModal({
     sound.setVolume(val / 100);
   };
 
+  const handleToggleBgm = () => {
+    const state = sound.toggleBGM();
+    setBgmActive(state);
+  };
+
   const handleThemeSelect = (themeId) => {
     setCurrentTheme(themeId);
     const updated = setActiveTheme(themeId);
     if (onThemeChange) {
       onThemeChange(updated);
+    }
+  };
+
+  const handleLangSelect = (code) => {
+    setCurrentLang(code);
+    setLanguage(code);
+    if (onLanguageChange) {
+      onLanguageChange(code);
     }
   };
 
@@ -46,14 +63,15 @@ export default function GameSettingsModal({
   };
 
   const modes = [
-    { id: "flags", title: "🚩 Flag Master", desc: "Identify countries by their national flags" },
-    { id: "capitals", title: "🏛️ Capital Cities", desc: "Match countries with their capitals" },
-    { id: "landmarks", title: "🗺️ Wonders & Sites", desc: "Famous landmarks, mountains, & wonders" },
-    { id: "daily", title: "📅 Daily Challenge", desc: "Seeded global expedition (5 questions)" },
-    { id: "revision", title: "🎯 Weak Spot Revision", desc: "Focus practice on previously missed nations" },
-    { id: "survival", title: "🏆 Survival (3 Lives)", desc: "Sudden death mode — 3 lives, go as far as you can!" },
-    { id: "trivia", title: "🌍 World Trivia", desc: "Geography facts, borders, & landscapes" },
-    { id: "timeAttack", title: "⚡ Time Blitz", desc: "Fast-paced rapid fire with speed bonuses" },
+    { id: "flags", title: `🚩 ${t("flagMaster", currentLang)}`, desc: "Identify countries by flags" },
+    { id: "capitals", title: `🏛️ ${t("capitalCities", currentLang)}`, desc: "Match countries with capitals" },
+    { id: "landmarks", title: `🗺️ ${t("landmarksSites", currentLang)}`, desc: "Famous landmarks & wonders" },
+    { id: "higherLower", title: `📊 ${t("higherLower", currentLang)}`, desc: "Compare populations head-to-head" },
+    { id: "daily", title: `📅 ${t("dailyChallenge", currentLang)}`, desc: "Seeded global expedition (5 Qs)" },
+    { id: "revision", title: `🎯 ${t("weakSpotRevision", currentLang)}`, desc: "Target previously missed nations" },
+    { id: "survival", title: `🏆 ${t("survivalMode", currentLang)}`, desc: "3 lives sudden death run" },
+    { id: "trivia", title: `🌍 ${t("worldTrivia", currentLang)}`, desc: "Geography facts & borders" },
+    { id: "timeAttack", title: `⚡ ${t("timeBlitz", currentLang)}`, desc: "Speed bonus rapid fire" },
   ];
 
   const continents = ["All", "Africa", "Asia", "Europe", "Americas", "Oceania"];
@@ -70,7 +88,7 @@ export default function GameSettingsModal({
           <div className="flex justify-between items-center pb-2 border-b border-[#3E4577]">
             <div>
               <h2 className="text-2xl font-bold tracking-tight">Game Customizer</h2>
-              <p className="text-xs text-[#9DA3D1]">Choose mode, region, theme & challenge settings</p>
+              <p className="text-xs text-[#9DA3D1]">Mode, language, region, audio & theme</p>
             </div>
             <button
               onClick={onClose}
@@ -80,8 +98,31 @@ export default function GameSettingsModal({
             </button>
           </div>
 
+          {/* Language Selector */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#A0A5D0] uppercase tracking-wider">
+              Language / ቋንቋ / Idioma / Langue
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {LANGUAGES.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => handleLangSelect(lang.code)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                    currentLang === lang.code
+                      ? "bg-[#BC6BE8] border-[#BC6BE8] text-white shadow-sm"
+                      : "bg-[#1E213D] border-[#343964] text-[#A0A5D0] hover:text-white"
+                  }`}
+                >
+                  <span>{lang.flag}</span>
+                  <span>{lang.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Mode Selection */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="text-xs font-bold text-[#A0A5D0] uppercase tracking-wider">
               Select Game Mode
             </label>
@@ -173,7 +214,7 @@ export default function GameSettingsModal({
             </div>
           )}
 
-          {/* Difficulty & Timer & Audio Volume */}
+          {/* Difficulty & Timer & Audio Controls */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div>
               <label className="text-xs font-bold text-[#A0A5D0] uppercase tracking-wider block mb-1">
@@ -212,6 +253,18 @@ export default function GameSettingsModal({
                 <label className="text-xs font-bold text-[#A0A5D0] uppercase tracking-wider">
                   Volume: {volume}%
                 </label>
+                <button
+                  type="button"
+                  onClick={handleToggleBgm}
+                  className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border transition-all cursor-pointer ${
+                    bgmActive
+                      ? "bg-purple-600/30 border-purple-400 text-purple-200"
+                      : "bg-gray-800 border-gray-700 text-gray-400"
+                  }`}
+                  title="Toggle Ambient BGM"
+                >
+                  {bgmActive ? "🎵 BGM On" : "🔇 BGM Off"}
+                </button>
               </div>
               <input
                 type="range"
