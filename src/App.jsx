@@ -482,21 +482,23 @@ function App() {
   const getModeTitle = () => {
     switch (settings.mode) {
       case "daily":
-        return "📅 Daily Global Challenge";
+        return `📅 ${t("dailyChallenge", currentLang)}`;
       case "revision":
-        return "🎯 Weak Spot Revision Deck";
+        return `🎯 ${t("weakSpotRevision", currentLang)}`;
       case "flags":
-        return `🚩 Flag Master (${settings.continent})`;
+        return `🚩 ${t("flagMaster", currentLang)} (${settings.continent})`;
       case "capitals":
-        return `🏛️ Capital Cities (${settings.continent})`;
+        return `🏛️ ${t("capitalCities", currentLang)} (${settings.continent})`;
       case "landmarks":
-        return `🗺️ Wonders & Sites (${settings.continent})`;
+        return `🗺️ ${t("landmarksSites", currentLang)} (${settings.continent})`;
+      case "higherLower":
+        return `📊 ${t("higherLower", currentLang)} (${settings.continent})`;
       case "survival":
-        return "🏆 Survival Mode (3 Lives)";
+        return `🏆 ${t("survivalMode", currentLang)}`;
       case "timeAttack":
-        return "⚡ Time Blitz";
+        return `⚡ ${t("timeBlitz", currentLang)}`;
       default:
-        return `🌍 World Geography Trivia (${settings.continent})`;
+        return `🌍 ${t("worldTrivia", currentLang)} (${settings.continent})`;
     }
   };
 
@@ -518,6 +520,7 @@ function App() {
       {gameState === "menu" && (
         <StartScreen
           stats={stats}
+          currentLang={currentLang}
           onStartGame={(modeId) => {
             const updated = { ...settings, mode: modeId };
             setSettings(updated);
@@ -554,7 +557,9 @@ function App() {
             lives={lives}
             isSurvivalMode={settings.mode === "survival"}
             isMuted={isMuted}
+            isBgmActive={isBgmActive}
             onToggleSound={handleToggleSound}
+            onToggleBGM={handleToggleBGM}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onOpenStats={() => setIsStatsOpen(true)}
             onOpenStudyDeck={() => setIsStudyDeckOpen(true)}
@@ -562,6 +567,7 @@ function App() {
             onLaunchDaily={handleLaunchDaily}
             onGoHome={() => setGameState("menu")}
             modeTitle={getModeTitle()}
+            currentLang={currentLang}
           />
 
           {/* Progress & Question Selector (in non-survival mode) */}
@@ -686,59 +692,69 @@ function App() {
                   )}
                 </div>
 
-                {/* Options Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  {currentQ?.options.map((option, i) => {
-                    const isHidden = hiddenOptions.includes(option);
-                    const isCorrectAnswer = option === currentQ.correctAnswer;
-                    const isSelected = currentAnswer?.selectedOption === option;
+                {/* Options Grid or Population Clash */}
+                {currentQ?.type === "higherLower" && currentQ.clashData ? (
+                  <PopulationClash
+                    clashData={currentQ.clashData}
+                    onSelect={handleAnswer}
+                    isAnswered={isAnswered}
+                    currentAnswer={currentAnswer}
+                    correctAnswer={currentQ.correctAnswer}
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    {currentQ?.options.map((option, i) => {
+                      const isHidden = hiddenOptions.includes(option);
+                      const isCorrectAnswer = option === currentQ.correctAnswer;
+                      const isSelected = currentAnswer?.selectedOption === option;
 
-                    let btnStyle = "bg-[#383E6E] hover:bg-[#484F8C] text-white border-[#4A5291]";
-                    if (isAnswered) {
-                      if (isCorrectAnswer) {
-                        btnStyle = "bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-600/30";
-                      } else if (isSelected) {
-                        btnStyle = "bg-rose-600 border-rose-400 text-white shadow-lg shadow-rose-600/30";
-                      } else {
-                        btnStyle = "bg-[#25284B] opacity-50 border-transparent text-gray-400";
+                      let btnStyle = "bg-[#383E6E] hover:bg-[#484F8C] text-white border-[#4A5291]";
+                      if (isAnswered) {
+                        if (isCorrectAnswer) {
+                          btnStyle = "bg-emerald-600 border-emerald-400 text-white shadow-lg shadow-emerald-600/30";
+                        } else if (isSelected) {
+                          btnStyle = "bg-rose-600 border-rose-400 text-white shadow-lg shadow-rose-600/30";
+                        } else {
+                          btnStyle = "bg-[#25284B] opacity-50 border-transparent text-gray-400";
+                        }
                       }
-                    }
 
-                    if (isHidden) {
-                      return (
-                        <div
-                          key={i}
-                          className="py-3.5 px-4 rounded-2xl border border-dashed border-gray-700/40 opacity-20 pointer-events-none"
-                        />
-                      );
-                    }
-
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => handleAnswer(option)}
-                        disabled={isAnswered}
-                        aria-pressed={isSelected}
-                        className={`text-left p-3.5 sm:p-4 rounded-2xl border font-medium text-xs sm:text-sm transition-all duration-200 flex items-center justify-between cursor-pointer active:scale-98 focus:outline-none focus:ring-2 focus:ring-[#BC6BE8] ${btnStyle}`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[11px] font-bold text-gray-300">
-                            {String.fromCharCode(65 + i)}
-                          </span>
-                          <span>{option}</span>
-                        </div>
-
-                        {isAnswered && (isCorrectAnswer || isSelected) && (
-                          <img
-                            src={isCorrectAnswer ? CheckIcon : CrossIcon}
-                            alt={isCorrectAnswer ? "Correct" : "Incorrect"}
-                            className="w-4 h-4 flex-shrink-0 ml-2"
+                      if (isHidden) {
+                        return (
+                          <div
+                            key={i}
+                            className="py-3.5 px-4 rounded-2xl border border-dashed border-gray-700/40 opacity-20 pointer-events-none"
                           />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                        );
+                      }
+
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => handleAnswer(option)}
+                          disabled={isAnswered}
+                          aria-pressed={isSelected}
+                          className={`text-left p-3.5 sm:p-4 rounded-2xl border font-medium text-xs sm:text-sm transition-all duration-200 flex items-center justify-between cursor-pointer active:scale-98 focus:outline-none focus:ring-2 focus:ring-[#BC6BE8] ${btnStyle}`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[11px] font-bold text-gray-300">
+                              {String.fromCharCode(65 + i)}
+                            </span>
+                            <span>{option}</span>
+                          </div>
+
+                          {isAnswered && (isCorrectAnswer || isSelected) && (
+                            <img
+                              src={isCorrectAnswer ? CheckIcon : CrossIcon}
+                              alt={isCorrectAnswer ? "Correct" : "Incorrect"}
+                              className="w-4 h-4 flex-shrink-0 ml-2"
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
 
@@ -764,6 +780,7 @@ function App() {
           maxStreak={maxStreak}
           isSurvivalMode={settings.mode === "survival"}
           survivedCount={userAnswers.length}
+          currentLang={currentLang}
           onRestart={() => loadQuestions()}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onInspectCountry={(country) => setInspectedCountry(country)}
@@ -779,6 +796,7 @@ function App() {
         settings={settings}
         onSaveSettings={handleSaveSettings}
         onThemeChange={(th) => setActiveThemeState(th)}
+        onLanguageChange={(code) => setCurrentLang(code)}
       />
 
       <StatsModal
