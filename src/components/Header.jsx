@@ -7,7 +7,9 @@ export default function Header({
   lives,
   isSurvivalMode,
   isMuted,
+  isBgmActive,
   onToggleSound,
+  onToggleBGM,
   onOpenSettings,
   onOpenStats,
   onOpenStudyDeck,
@@ -15,6 +17,7 @@ export default function Header({
   onLaunchDaily,
   onGoHome,
   modeTitle,
+  currentLang = "en",
 }) {
   return (
     <header
@@ -131,6 +134,22 @@ export default function Header({
         >
           📊
         </button>
+
+        {/* Ambient BGM Button */}
+        {onToggleBGM && (
+          <button
+            onClick={onToggleBGM}
+            title={isBgmActive ? "Disable Ambient BGM" : "Enable Ambient BGM"}
+            aria-label="Toggle Ambient Music"
+            className={`p-2 rounded-full transition-all transform active:scale-95 cursor-pointer border text-xs sm:text-sm ${
+              isBgmActive
+                ? "bg-[#BC6BE8]/20 border-[#BC6BE8] text-[#BC6BE8]"
+                : "bg-[#2A2F57] hover:bg-[#3D447D] border-[#444D87] text-gray-400"
+            }`}
+          >
+            🎵
+          </button>
+        )}
 
         {/* Audio Mute Toggle Button */}
         <button
