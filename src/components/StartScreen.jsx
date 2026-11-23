@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { calculateLevelFromScore } from "../utils/progression";
 import { t } from "../utils/i18n";
+import { getSelectedAvatar } from "../utils/avatars";
 
 export default function StartScreen({
   stats,
@@ -13,6 +14,7 @@ export default function StartScreen({
   onOpenStats,
 }) {
   const progression = calculateLevelFromScore(stats?.totalScore || 0);
+  const avatar = getSelectedAvatar();
 
   const quickModes = [
     {
@@ -20,6 +22,12 @@ export default function StartScreen({
       title: `🚩 ${t("flagMaster", currentLang)}`,
       desc: "Identify countries by flags",
       badge: "Popular",
+    },
+    {
+      id: "versus",
+      title: "⚔️ 2-Player Versus Duel",
+      desc: "Local pass & play showdown",
+      badge: "PvP",
     },
     {
       id: "daily",
@@ -80,7 +88,12 @@ export default function StartScreen({
         <div className="bg-[#181B38] border border-[#2D335E] rounded-2xl p-4 text-left space-y-2.5 max-w-lg mx-auto">
           <div className="flex justify-between items-center text-xs">
             <div className="flex items-center gap-2">
-              <span className="text-xl">{progression.badge}</span>
+              <span className="text-xl" title={`Avatar: ${avatar.title}`}>
+                {avatar.icon}
+              </span>
+              <span className="text-xl" title="Cartographic Rank">
+                {progression.badge}
+              </span>
               <div>
                 <p className="font-bold text-white text-sm">
                   Level {progression.level}: {progression.title}
