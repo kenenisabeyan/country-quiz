@@ -6,6 +6,7 @@ import { sound } from "../utils/sound";
 import CheckIcon from "../assets/Check_round_fill.svg";
 import CrossIcon from "../assets/Close_round_fill.svg";
 import PerformanceTelemetry from "./PerformanceTelemetry";
+import { t } from "../utils/i18n";
 
 export default function CompletePage({
   score,
@@ -15,6 +16,7 @@ export default function CompletePage({
   maxStreak,
   isSurvivalMode,
   survivedCount,
+  currentLang = "en",
   onRestart,
   onOpenSettings,
   onInspectCountry,
@@ -95,7 +97,7 @@ export default function CompletePage({
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-[#E2E4F3] mt-2">
-            {isSurvivalMode ? "Game Over — Survival Run" : "Quiz Completed!"}
+            {isSurvivalMode ? t("survivalGameOver", currentLang) : t("quizCompleted", currentLang)}
           </h2>
           <p className="text-xs sm:text-sm text-[#A0A5D0]">{rank.desc}</p>
         </div>
@@ -103,23 +105,23 @@ export default function CompletePage({
         {/* Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full max-w-lg">
           <div className="bg-[#1F2342] border border-[#393E6E] p-3 rounded-2xl">
-            <p className="text-[11px] text-[#8E95C7]">Total Score</p>
+            <p className="text-[11px] text-[#8E95C7]">{t("totalScore", currentLang)}</p>
             <p className="text-xl font-black text-[#E65895]">{score}</p>
           </div>
           <div className="bg-[#1F2342] border border-[#393E6E] p-3 rounded-2xl">
             <p className="text-[11px] text-[#8E95C7]">
-              {isSurvivalMode ? "Survived" : "Correct"}
+              {isSurvivalMode ? t("survived", currentLang) : t("correct", currentLang)}
             </p>
             <p className="text-xl font-black text-emerald-400">
               {isSurvivalMode ? `${survivedCount} Qs` : `${correctCount}/${totalQuestions}`}
             </p>
           </div>
           <div className="bg-[#1F2342] border border-[#393E6E] p-3 rounded-2xl">
-            <p className="text-[11px] text-[#8E95C7]">Accuracy</p>
+            <p className="text-[11px] text-[#8E95C7]">{t("accuracy", currentLang)}</p>
             <p className="text-xl font-black text-[#BC6BE8]">{percentage}%</p>
           </div>
           <div className="bg-[#1F2342] border border-[#393E6E] p-3 rounded-2xl">
-            <p className="text-[11px] text-[#8E95C7]">Max Streak</p>
+            <p className="text-[11px] text-[#8E95C7]">{t("maxStreak", currentLang)}</p>
             <p className="text-xl font-black text-amber-400">🔥 {maxStreak || 0}</p>
           </div>
         </div>
@@ -133,7 +135,7 @@ export default function CompletePage({
             onClick={onRestart}
             className="flex-1 min-w-[130px] bg-gradient-to-r from-[#E65895] to-[#BC6BE8] hover:from-[#d84f8a] hover:to-[#ab5fd6] text-white font-bold py-3 px-5 rounded-2xl shadow-lg shadow-purple-500/25 transition-all transform active:scale-95 cursor-pointer text-sm"
           >
-            🔄 Play Again
+            {t("playAgain", currentLang)}
           </button>
 
           {onGoHome && (
@@ -141,7 +143,7 @@ export default function CompletePage({
               onClick={onGoHome}
               className="bg-[#25284B] hover:bg-[#343964] border border-[#444A7F] text-white font-semibold py-3 px-4 rounded-2xl transition-all cursor-pointer text-xs sm:text-sm"
             >
-              🏠 Menu
+              {t("menu", currentLang)}
             </button>
           )}
 
@@ -149,21 +151,21 @@ export default function CompletePage({
             onClick={onOpenCertificate}
             className="bg-[#25284B] hover:bg-[#343964] border border-[#BC6BE8]/40 text-[#BC6BE8] font-bold py-3 px-4 rounded-2xl transition-all cursor-pointer text-xs sm:text-sm flex items-center gap-1.5 shadow-sm"
           >
-            🎓 Certificate
+            🎓 {t("certificate", currentLang)}
           </button>
 
           <button
             onClick={onOpenSettings}
             className="bg-[#25284B] hover:bg-[#343964] border border-[#444A7F] text-white font-semibold py-3 px-4 rounded-2xl transition-all cursor-pointer text-xs sm:text-sm"
           >
-            ⚙️ Modes
+            ⚙️ {t("customMode", currentLang)}
           </button>
 
           <button
             onClick={handleShare}
             className="bg-[#25284B] hover:bg-[#343964] border border-[#444A7F] text-white font-semibold py-3 px-4 rounded-2xl transition-all cursor-pointer text-xs sm:text-sm"
           >
-            {copied ? "✅ Copied!" : "📤 Share"}
+            {copied ? "✅ Copied!" : `📤 ${t("share", currentLang)}`}
           </button>
         </div>
 
@@ -172,7 +174,7 @@ export default function CompletePage({
           onClick={() => setShowReview(!showReview)}
           className="text-xs text-[#A0A5D0] hover:text-white underline mt-1 cursor-pointer transition-colors"
         >
-          {showReview ? "Hide Question Review ▲" : "Review All Answers & Country Cards ▼"}
+          {showReview ? `▲ ${t("hideReview", currentLang)}` : `▼ ${t("reviewBreakdown", currentLang)}`}
         </button>
 
         {/* Answer Breakdown Accordion */}
