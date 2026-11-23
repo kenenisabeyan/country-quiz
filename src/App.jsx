@@ -50,6 +50,17 @@ function App() {
   // Visual Theme
   const [activeTheme, setActiveThemeState] = useState(getActiveTheme());
 
+  // Localization Language
+  const [currentLang, setCurrentLang] = useState(getLanguage());
+
+  // Background Ambient Music
+  const [isBgmActive, setIsBgmActive] = useState(sound.isBGMActive());
+
+  const handleToggleBGM = () => {
+    const active = sound.toggleBGM();
+    setIsBgmActive(active);
+  };
+
   // Survival Mode
   const [lives, setLives] = useState(3);
 
