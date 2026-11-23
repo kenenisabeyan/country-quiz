@@ -67,6 +67,7 @@ export default function GameSettingsModal({
     { id: "capitals", title: `🏛️ ${t("capitalCities", currentLang)}`, desc: "Match countries with capitals" },
     { id: "landmarks", title: `🗺️ ${t("landmarksSites", currentLang)}`, desc: "Famous landmarks & wonders" },
     { id: "higherLower", title: `📊 ${t("higherLower", currentLang)}`, desc: "Compare populations head-to-head" },
+    { id: "versus", title: "⚔️ 2-Player Versus Duel", desc: "Local pass & play 2-player battle" },
     { id: "daily", title: `📅 ${t("dailyChallenge", currentLang)}`, desc: "Seeded global expedition (5 Qs)" },
     { id: "revision", title: `🎯 ${t("weakSpotRevision", currentLang)}`, desc: "Target previously missed nations" },
     { id: "survival", title: `🏆 ${t("survivalMode", currentLang)}`, desc: "3 lives sudden death run" },

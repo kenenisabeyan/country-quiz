@@ -726,7 +726,7 @@ export async function fetchQuestionsByMode(
   if (mode === "landmarks") {
     return generateLandmarkQuestions(count, continent);
   }
-  if (mode === "survival" || mode === "timeAttack") {
+  if (mode === "survival" || mode === "timeAttack" || mode === "versus") {
     return generateMixedQuestions(count, continent);
   }
 

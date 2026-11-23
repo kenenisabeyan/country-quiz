@@ -537,6 +537,8 @@ function App() {
         return `🏆 ${t("survivalMode", currentLang)}`;
       case "timeAttack":
         return `⚡ ${t("timeBlitz", currentLang)}`;
+      case "versus":
+        return "⚔️ 2-Player Versus Duel";
       default:
         return `🌍 ${t("worldTrivia", currentLang)} (${settings.continent})`;
     }
