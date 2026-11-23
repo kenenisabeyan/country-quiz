@@ -476,16 +476,20 @@ function App() {
     isStudyDeckOpen,
     isAchievementsOpen,
     isCertificateOpen,
+    isShortcutsOpen,
     inspectedCountry,
     gameState,
     isLoading,
     questions,
     current,
+    currentLang,
     hiddenOptions,
     handleAnswer,
     handleUseHint,
     handleUseFiftyFifty,
     handleUseSkip,
+    handleToggleSound,
+    handleToggleBGM,
   ]);
 
   const handleSaveSettings = (newSettings) => {
@@ -579,6 +583,12 @@ function App() {
 
       {/* 3. GAMEPLAY SCREEN */}
       {gameState === "playing" && !isLoading && (
+        settings.mode === "versus" ? (
+          <VersusDuel
+            questions={questions}
+            onExit={() => setGameState("menu")}
+          />
+        ) : (
         <main
           className="w-full max-w-3xl border rounded-3xl sm:rounded-4xl p-5 sm:p-9 shadow-2xl backdrop-blur-lg transition-colors duration-500"
           style={{
@@ -600,6 +610,7 @@ function App() {
             onOpenStats={() => setIsStatsOpen(true)}
             onOpenStudyDeck={() => setIsStudyDeckOpen(true)}
             onOpenAchievements={() => setIsAchievementsOpen(true)}
+            onOpenShortcuts={() => setIsShortcutsOpen(true)}
             onLaunchDaily={handleLaunchDaily}
             onGoHome={() => setGameState("menu")}
             modeTitle={getModeTitle()}
@@ -678,9 +689,22 @@ function App() {
               >
                 {/* Question Text */}
                 <div className="text-center space-y-3">
-                  <h2 className="text-lg sm:text-2xl font-bold text-white px-2 leading-relaxed">
-                    {currentQ?.question}
-                  </h2>
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
+                    <h2 className="text-lg sm:text-2xl font-bold text-white px-2 leading-relaxed">
+                      {currentQ?.question}
+                    </h2>
+                    {currentQ?.countryData && (
+                      <button
+                        type="button"
+                        onClick={() => speakText(currentQ.countryData.name, currentLang)}
+                        title="Pronounce country name aloud (Key P)"
+                        aria-label="Listen to pronunciation"
+                        className="p-1.5 rounded-full bg-[#393F73] hover:bg-[#4C5499] text-xs text-purple-200 transition-colors cursor-pointer active:scale-95 border border-purple-400/30"
+                      >
+                        🔊
+                      </button>
+                    )}
+                  </div>
 
                   {/* Flag Image Display with instant preloaded cache */}
                   {currentQ?.flagUrl && (
@@ -804,6 +828,7 @@ function App() {
             />
           </section>
         </main>
+        )
       )}
 
       {/* 4. RESULTS / COMPLETE SCREEN */}
@@ -868,6 +893,11 @@ function App() {
         accuracy={currentAccuracy}
         rankTitle="Master Cartographer"
         modeTitle={getModeTitle()}
+      />
+
+      <ShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
       />
     </div>
   );
