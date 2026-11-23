@@ -1,10 +1,12 @@
-// Web Audio API synthesizer with volume and mute control
+// Web Audio API synthesizer with volume, mute, sound FX, and procedural ambient BGM
 class SoundController {
   constructor() {
     this.ctx = null;
     this.muted = localStorage.getItem("country_quiz_muted") === "true";
+    this.bgmEnabled = localStorage.getItem("country_quiz_bgm") === "true";
     const savedVol = localStorage.getItem("country_quiz_volume");
     this.volume = savedVol ? parseFloat(savedVol) : 0.8;
+    this.bgmInterval = null;
   }
 
   init() {
@@ -22,11 +24,31 @@ class SoundController {
   toggleMute() {
     this.muted = !this.muted;
     localStorage.setItem("country_quiz_muted", this.muted ? "true" : "false");
+    if (this.muted && this.bgmInterval) {
+      this.stopBGM();
+    } else if (!this.muted && this.bgmEnabled) {
+      this.startBGM();
+    }
     return this.muted;
   }
 
   isMuted() {
     return this.muted;
+  }
+
+  toggleBGM() {
+    this.bgmEnabled = !this.bgmEnabled;
+    localStorage.setItem("country_quiz_bgm", this.bgmEnabled ? "true" : "false");
+    if (this.bgmEnabled && !this.muted) {
+      this.startBGM();
+    } else {
+      this.stopBGM();
+    }
+    return this.bgmEnabled;
+  }
+
+  isBGMActive() {
+    return this.bgmEnabled;
   }
 
   setVolume(vol) {
@@ -36,6 +58,56 @@ class SoundController {
 
   getVolume() {
     return this.volume;
+  }
+
+  startBGM() {
+    this.init();
+    if (!this.ctx || this.bgmInterval || this.muted) return;
+
+    // Ambient procedural chord progression: C, G, Am, F pentatonic frequencies
+    const chordSequences = [
+      [261.63, 329.63, 392.0, 523.25], // C Major
+      [220.0, 261.63, 329.63, 440.0],  // A Minor
+      [174.61, 220.0, 261.63, 349.23], // F Major
+      [196.0, 246.94, 293.66, 392.0],  // G Major
+    ];
+
+    let chordIdx = 0;
+    const playChordStep = () => {
+      if (!this.ctx || !this.bgmEnabled || this.muted) return;
+      const now = this.ctx.currentTime;
+      const chord = chordSequences[chordIdx];
+      chordIdx = (chordIdx + 1) % chordSequences.length;
+
+      chord.forEach((freq, i) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now + i * 0.4);
+
+        const chordGain = 0.015 * this.volume;
+        gain.gain.setValueAtTime(0.001, now + i * 0.4);
+        gain.gain.linearRampToValueAtTime(chordGain, now + i * 0.4 + 0.6);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.4 + 2.5);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now + i * 0.4);
+        osc.stop(now + i * 0.4 + 2.6);
+      });
+    };
+
+    playChordStep();
+    this.bgmInterval = setInterval(playChordStep, 3200);
+  }
+
+  stopBGM() {
+    if (this.bgmInterval) {
+      clearInterval(this.bgmInterval);
+      this.bgmInterval = null;
+    }
   }
 
   playCorrect() {
