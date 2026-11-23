@@ -15,6 +15,7 @@ export default function Header({
   onOpenStats,
   onOpenStudyDeck,
   onOpenAchievements,
+  onOpenShortcuts,
   onLaunchDaily,
   onGoHome,
   modeTitle,
@@ -162,6 +163,18 @@ export default function Header({
         >
           {isMuted ? "🔇" : "🔊"}
         </button>
+
+        {/* Keyboard Shortcuts Button */}
+        {onOpenShortcuts && (
+          <button
+            onClick={onOpenShortcuts}
+            title="Keyboard Navigation Shortcuts (?)"
+            aria-label="Open Keyboard Shortcuts Guide"
+            className="p-2 rounded-full bg-[#2A2F57] hover:bg-[#3D447D] focus:ring-2 focus:ring-[#BC6BE8] focus:outline-none text-white transition-all transform active:scale-95 cursor-pointer border border-[#444D87] text-xs sm:text-sm"
+          >
+            ⌨️
+          </button>
+        )}
 
         {/* Game Settings button */}
         <button
