@@ -16,6 +16,8 @@ import AchievementsModal from "./components/AchievementsModal";
 import CertificateModal from "./components/CertificateModal";
 import WorldMapRadar from "./components/WorldMapRadar";
 import PopulationClash from "./components/PopulationClash";
+import ShortcutsModal from "./components/ShortcutsModal";
+import VersusDuel from "./components/VersusDuel";
 import Toast from "./components/Toast";
 import { fetchQuestionsByMode, saveMissedCountry, clearMissedCountry } from "./data/countryData";
 import { sound } from "./utils/sound";
@@ -24,6 +26,7 @@ import { haptics } from "./utils/haptics";
 import { evaluateAchievements } from "./utils/achievements";
 import { getActiveTheme } from "./utils/themes";
 import { getLanguage, t } from "./utils/i18n";
+import { speakText } from "./utils/speech";
 
 const DEFAULT_STATS = {
   gamesPlayed: 0,
